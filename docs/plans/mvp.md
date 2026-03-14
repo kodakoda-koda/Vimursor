@@ -188,11 +188,14 @@ let convertedY = screenHeight - position.y - size.height
 ## 実装チェックリスト
 
 ```
-[ ] Setup: swift package init, Package.swift, Info.plist, entitlements
-[ ] Phase 1-1: main.swift + AppDelegate.swift（起動・権限チェック）
-[ ] Phase 1-2: Overlay/OverlayWindow.swift（透明NSPanel）
-[ ] Phase 1-3: HotkeyManager.swift（CGEventTap）
-[ ] Phase 1 動作確認: Cmd+Shift+Space でオーバーレイ表示/非表示
+[x] Setup: swift package init, Package.swift, Info.plist, entitlements
+    Note: platforms省略・swift-tools-version 6.0（CLT 16.2 x86_64 ABI バグ回避）
+[x] Phase 1-1: main.swift + AppDelegate.swift（起動・権限チェック）
+[x] Phase 1-2: Overlay/OverlayWindow.swift（透明NSPanel）
+[x] Phase 1-3: HotkeyManager.swift（CGEventTap）
+[x] Phase 1 動作確認: Cmd+Shift+Space でオーバーレイ表示/非表示
+    Note: hidesOnDeactivate = false が必須（デフォルト true だと非アクティブ時に即消える）
+          orderFrontRegardless() を使用 / main.swift で setActivationPolicy(.regular)
 [ ] Phase 2-1: Accessibility/AXManager.swift（バッチ取得・クリック）
 [ ] Phase 2-2: Accessibility/UIElementEnumerator.swift（再帰的列挙）
 [ ] Phase 2-3: Overlay/LabelGenerator.swift（ラベル生成）

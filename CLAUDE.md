@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 macOSをキーボードのみで操作できるツール（Homerowの代替OSS）。
 Swift + AppKit で実装。App Store非対応（Accessibility APIのためサンドボックス外配布）。
-実装計画: `docs/plans/vimursor_implementation.md`
+実装計画: `docs/plans/overview.md`（概要）/ `docs/plans/mvp.md`（MVP詳細）
 
 ## Directory Structure
 
