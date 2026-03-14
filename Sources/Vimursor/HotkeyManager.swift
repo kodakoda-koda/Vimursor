@@ -13,6 +13,8 @@ private enum ModifierFlags {
 // スレッド安全性の責任をこのクラスが負う
 final class HotkeyManager: @unchecked Sendable {
     var onHintModeActivated: (() -> Void)?
+    // HintMode中にキー入力を委譲するハンドラ（true=消費, false=通常処理）
+    var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
     private var eventTap: CFMachPort?
 
     func start() {
@@ -50,6 +52,10 @@ final class HotkeyManager: @unchecked Sendable {
 
         let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags.intersection([.maskCommand, .maskShift, .maskAlternate, .maskControl])
+
+        if let handler = keyEventHandler, handler(keyCode, flags) {
+            return nil  // HintModeが消費
+        }
 
         if keyCode == KeyCode.space && flags == ModifierFlags.cmdShift {
             DispatchQueue.main.async { [weak self] in

@@ -4,6 +4,7 @@ import AppKit
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private var overlayWindow: OverlayWindow?
     private var hotkeyManager: HotkeyManager?
+    private var hintModeController: HintModeController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         checkAccessibilityPermission()
@@ -11,9 +12,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let overlay = OverlayWindow()
         self.overlayWindow = overlay
 
+        let hintController = HintModeController()
+        self.hintModeController = hintController
+
         let manager = HotkeyManager()
         manager.onHintModeActivated = { [weak self] in
-            self?.overlayWindow?.toggle()
+            guard let self, let overlay = self.overlayWindow, let hotkey = self.hotkeyManager else { return }
+            self.hintModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         self.hotkeyManager = manager
         manager.start()
