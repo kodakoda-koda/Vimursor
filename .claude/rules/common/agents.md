@@ -49,6 +49,12 @@ First agent 1, then agent 2, then agent 3
 | planner | NO | 計画書はメインセッションで承認が必要なため |
 | architect | NO | 設計判断はユーザー確認が必要なため |
 
+**例外: セットアップ系タスクはフォアグラウンドで実行する**
+
+`swift package init` / `git init` など、後続エージェントが依存する環境構築はフォアグラウンドで実行し、完了を確認してからエージェントを起動する。
+
+*Rationale: バックグラウンドエージェントが `Package.swift` や `Sources/` の存在を前提に動作するため、環境未構築のまま起動すると即座に失敗する。*
+
 起動後の確認方法：
 
 ```bash
@@ -57,6 +63,21 @@ tail -n 50 <output_file>
 ```
 
 完全な出力が必要な場合のみ `Read` tool で出力ファイルを開く。
+
+## Background Agent Prompt Requirements
+
+バックグラウンドエージェントはメインセッションの会話履歴を持たない。プロンプトに以下を必ず含める：
+
+```
+必須項目:
+- ワーキングディレクトリ: /Users/souheikodama/Desktop/repos/Vimursor
+- 作成/修正するファイルの絶対パス（例: Sources/Vimursor/HotkeyManager.swift）
+- 参照すべき既存ファイルのパス（例: docs/plans/mvp.md の Phase 1 参照）
+- 実行すべきコマンド（swift build / swift test 等）
+- 完了条件（何が通れば成功か）
+```
+
+*Rationale: コンテキストが不足したエージェントは手探りになり、誤ったファイルを作成したり途中で失敗したりする。プロンプトが自己完結していれば成功率が大幅に上がる。*
 
 ## Multi-Perspective Analysis
 
