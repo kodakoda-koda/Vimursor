@@ -4,6 +4,7 @@ import CoreGraphics
 private enum KeyCode {
     static let space: CGKeyCode = 49
     static let slash: CGKeyCode = 44
+    static let j: CGKeyCode = 38
 }
 
 private enum ModifierFlags {
@@ -15,6 +16,7 @@ private enum ModifierFlags {
 final class HotkeyManager: @unchecked Sendable {
     var onHintModeActivated: (() -> Void)?
     var onSearchModeActivated: (() -> Void)?
+    var onScrollModeActivated: (() -> Void)?
     // HintMode/SearchMode中にキー入力を委譲するハンドラ（true=消費, false=通常処理）
     var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
     private var eventTap: CFMachPort?
@@ -69,6 +71,13 @@ final class HotkeyManager: @unchecked Sendable {
         if keyCode == KeyCode.slash && flags == ModifierFlags.cmdShift {
             DispatchQueue.main.async { [weak self] in
                 self?.onSearchModeActivated?()
+            }
+            return nil
+        }
+
+        if keyCode == KeyCode.j && flags == ModifierFlags.cmdShift {
+            DispatchQueue.main.async { [weak self] in
+                self?.onScrollModeActivated?()
             }
             return nil
         }

@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hotkeyManager: HotkeyManager?
     private var hintModeController: HintModeController?
     private var searchModeController: SearchModeController?
+    private var scrollModeController: ScrollModeController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         checkAccessibilityPermission()
@@ -18,6 +19,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let searchController = SearchModeController()
         self.searchModeController = searchController
+
+        let scrollController = ScrollModeController()
+        self.scrollModeController = scrollController
 
         let manager = HotkeyManager()
         manager.onHintModeActivated = { [weak self] in
@@ -33,6 +37,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let hotkey = self.hotkeyManager,
                   hotkey.keyEventHandler == nil else { return }
             self.searchModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        }
+        manager.onScrollModeActivated = { [weak self] in
+            guard let self,
+                  let overlay = self.overlayWindow,
+                  let hotkey = self.hotkeyManager,
+                  hotkey.keyEventHandler == nil else { return }
+            self.scrollModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         self.hotkeyManager = manager
         manager.start()
