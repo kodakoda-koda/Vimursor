@@ -12,6 +12,22 @@ struct UIElementInfo: Sendable {
     let axElement: AXElement
 }
 
+struct SearchElementInfo: Sendable {
+    let frame: CGRect
+    let title: String
+    let label: String
+    let description: String
+    let role: String
+    let axElement: AXElement
+
+    var searchableText: String {
+        [title, label, description, role]
+            .filter { !$0.isEmpty }
+            .joined(separator: " ")
+            .lowercased()
+    }
+}
+
 final class AXManager {
     /// バックグラウンドで列挙し、メインスレッドで completion を呼ぶ
     func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([AXElement]) -> Void) {
@@ -42,8 +58,57 @@ final class AXManager {
         return infos
     }
 
+    func fetchSearchableElements(
+        in app: AXUIElement,
+        completion: @escaping @Sendable ([SearchElementInfo]) -> Void
+    ) {
+        let wrapped = AXElement(ref: app)
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        DispatchQueue.global(qos: .userInitiated).async {
+            let elements = UIElementEnumerator.enumerateSearchableElements(root: wrapped.ref)
+            let infos = elements.compactMap { el -> SearchElementInfo? in
+                guard let frame = self.fetchFrame(element: el, screenHeight: screenHeight) else { return nil }
+                func str(_ key: String) -> String {
+                    var ref: CFTypeRef?
+                    guard AXUIElementCopyAttributeValue(el, key as CFString, &ref) == .success,
+                          let s = ref as? String else { return "" }
+                    return s
+                }
+                return SearchElementInfo(
+                    frame: frame,
+                    title: str("AXTitle"),
+                    label: str("AXLabel"),
+                    description: str("AXDescription"),
+                    role: str("AXRole"),
+                    axElement: AXElement(ref: el)
+                )
+            }
+            DispatchQueue.main.async { completion(infos) }
+        }
+    }
+
     func click(element: AXUIElement) {
         AXUIElementPerformAction(element, "AXPress" as CFString)
+    }
+
+    func clickAt(frame: CGRect) {
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let point = AXManager.centerScreenPoint(from: frame, screenHeight: screenHeight)
+        let down = CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown,
+                           mouseCursorPosition: point, mouseButton: .left)
+        let up   = CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp,
+                           mouseCursorPosition: point, mouseButton: .left)
+        down?.post(tap: .cghidEventTap)
+        up?.post(tap: .cghidEventTap)
+    }
+
+    /// NSWindow 座標系（原点:左下）の frame をスクリーン座標系（原点:左上）の中心点に変換する
+    /// テスト用に static で公開
+    static func centerScreenPoint(from frame: CGRect, screenHeight: CGFloat) -> CGPoint {
+        CGPoint(
+            x: frame.origin.x + frame.width / 2,
+            y: screenHeight - frame.origin.y - frame.height / 2
+        )
     }
 
     private func fetchFrame(element: AXUIElement, screenHeight: CGFloat) -> CGRect? {

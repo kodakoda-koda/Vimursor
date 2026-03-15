@@ -3,6 +3,7 @@ import CoreGraphics
 
 private enum KeyCode {
     static let space: CGKeyCode = 49
+    static let slash: CGKeyCode = 44
 }
 
 private enum ModifierFlags {
@@ -13,7 +14,8 @@ private enum ModifierFlags {
 // スレッド安全性の責任をこのクラスが負う
 final class HotkeyManager: @unchecked Sendable {
     var onHintModeActivated: (() -> Void)?
-    // HintMode中にキー入力を委譲するハンドラ（true=消費, false=通常処理）
+    var onSearchModeActivated: (() -> Void)?
+    // HintMode/SearchMode中にキー入力を委譲するハンドラ（true=消費, false=通常処理）
     var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
     private var eventTap: CFMachPort?
 
@@ -60,6 +62,13 @@ final class HotkeyManager: @unchecked Sendable {
         if keyCode == KeyCode.space && flags == ModifierFlags.cmdShift {
             DispatchQueue.main.async { [weak self] in
                 self?.onHintModeActivated?()
+            }
+            return nil
+        }
+
+        if keyCode == KeyCode.slash && flags == ModifierFlags.cmdShift {
+            DispatchQueue.main.async { [weak self] in
+                self?.onSearchModeActivated?()
             }
             return nil
         }
