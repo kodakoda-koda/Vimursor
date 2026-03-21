@@ -2,6 +2,7 @@ import AppKit
 
 private enum HintModeState {
     case inactive
+    case fetching   // 要素取得中。この状態でも activate() を弾く
     case active(hints: [UIElementInfo], input: String)
 }
 
@@ -15,16 +16,17 @@ final class HintModeController {
     private weak var overlayWindow: OverlayWindow?
     private weak var hotkeyManager: HotkeyManager?
 
-    // CGEventTapスレッドから読まれる（書き込みはメインスレッドのみ）
-    private var isActive: Bool = false
-
     func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
-        guard !isActive else { return }
+        guard case .inactive = state else { return }  // fetching / active 中はスキップ
+        state = .fetching                              // 同期的に状態変更（二重起動防止）
 
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
 
-        guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return }
+        guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
+            state = .inactive
+            return
+        }
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
         axManager.fetchClickableElements(in: appElement) { [weak self] elements in
@@ -39,13 +41,15 @@ final class HintModeController {
         overlayWindow: OverlayWindow,
         hotkeyManager: HotkeyManager
     ) {
-        guard !elements.isEmpty else { return }
+        guard !elements.isEmpty else {
+            state = .inactive  // 要素がなければ inactive に戻す
+            return
+        }
 
         let labels = LabelGenerator.generateLabels(count: elements.count)
         let hints = axManager.buildUIElementInfos(elements: elements, labels: labels)
 
         state = .active(hints: hints, input: "")
-        isActive = true
 
         let view = HintView(frame: overlayWindow.contentView?.bounds ?? .zero)
         view.autoresizingMask = [.width, .height]
@@ -66,7 +70,6 @@ final class HintModeController {
     }
 
     func deactivate() {
-        isActive = false
         state = .inactive
         hintView?.removeFromSuperview()
         hintView = nil
@@ -97,10 +100,10 @@ final class HintModeController {
         }
 
         if let exact = matches.first(where: { $0.label == newInput }) {
-            let element = exact.axElement.ref
+            let frame = exact.frame
             deactivate()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                self?.axManager.click(element: element)
+                self?.axManager.clickAt(frame: frame)
             }
             return
         }

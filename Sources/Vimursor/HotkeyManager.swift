@@ -17,8 +17,23 @@ final class HotkeyManager: @unchecked Sendable {
     var onHintModeActivated: (() -> Void)?
     var onSearchModeActivated: (() -> Void)?
     var onScrollModeActivated: (() -> Void)?
-    // HintMode/SearchMode中にキー入力を委譲するハンドラ（true=消費, false=通常処理）
-    var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
+
+    // CGEventTap スレッド（読み取り）とメインスレッド（書き込み）をまたぐため NSLock で保護
+    private let handlerLock = NSLock()
+    private var _keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
+    var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)? {
+        get {
+            handlerLock.lock()
+            defer { handlerLock.unlock() }
+            return _keyEventHandler
+        }
+        set {
+            handlerLock.lock()
+            defer { handlerLock.unlock() }
+            _keyEventHandler = newValue
+        }
+    }
+
     private var eventTap: CFMachPort?
 
     func start() {

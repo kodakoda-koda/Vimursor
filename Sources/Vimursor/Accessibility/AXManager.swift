@@ -89,10 +89,6 @@ final class AXManager: @unchecked Sendable {
         }
     }
 
-    func click(element: AXUIElement) {
-        AXUIElementPerformAction(element, "AXPress" as CFString)
-    }
-
     @MainActor
     func clickAt(frame: CGRect) {
         let screenHeight = NSScreen.main?.frame.height ?? 0
