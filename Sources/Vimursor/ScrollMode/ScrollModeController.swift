@@ -14,6 +14,7 @@ private enum ScrollKeyCode {
     static let u: CGKeyCode = 32
 }
 
+@MainActor
 private final class ScrollIndicatorView: NSView {
     override init(frame: NSRect) {
         super.init(frame: frame)
@@ -36,7 +37,8 @@ private final class ScrollIndicatorView: NSView {
     }
 }
 
-final class ScrollModeController: @unchecked Sendable {
+@MainActor
+final class ScrollModeController {
     private var state: ScrollModeState = .inactive
     private var isActive: Bool = false
     private var indicatorView: ScrollIndicatorView?
@@ -57,8 +59,10 @@ final class ScrollModeController: @unchecked Sendable {
         overlayWindow.show()
 
         hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
-            guard let self, self.isActive else { return false }
-            DispatchQueue.main.async { self.handleKey(keyCode: keyCode, flags: flags) }
+            guard let self else { return false }
+            Task { @MainActor [weak self] in
+                self?.handleKey(keyCode: keyCode, flags: flags)
+            }
             return true
         }
 

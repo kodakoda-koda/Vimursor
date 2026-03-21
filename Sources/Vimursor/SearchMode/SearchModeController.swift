@@ -5,7 +5,8 @@ private enum SearchModeState {
     case active(elements: [SearchElementInfo], query: String, matched: [SearchElementInfo])
 }
 
-final class SearchModeController: @unchecked Sendable {
+@MainActor
+final class SearchModeController {
     private let axManager = AXManager()
     private var state: SearchModeState = .inactive
     private var isActive: Bool = false
@@ -23,7 +24,9 @@ final class SearchModeController: @unchecked Sendable {
 
         axManager.fetchSearchableElements(in: appElement) { [weak self] elements in
             guard !elements.isEmpty else { return }
-            self?.startSearchMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+            Task { @MainActor [weak self] in
+                self?.startSearchMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+            }
         }
     }
 
@@ -44,8 +47,10 @@ final class SearchModeController: @unchecked Sendable {
         overlayWindow.show()
 
         hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
-            guard let self, self.isActive else { return false }
-            DispatchQueue.main.async { self.handleKey(keyCode: keyCode, flags: flags) }
+            guard let self else { return false }
+            Task { @MainActor [weak self] in
+                self?.handleKey(keyCode: keyCode, flags: flags)
+            }
             return true
         }
     }
@@ -59,7 +64,7 @@ final class SearchModeController: @unchecked Sendable {
         overlayWindow?.hide()
     }
 
-    static func filter(
+    nonisolated static func filter(
         elements: [SearchElementInfo],
         query: String
     ) -> [SearchElementInfo] {

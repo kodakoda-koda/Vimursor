@@ -1,5 +1,6 @@
 import AppKit
 
+@MainActor
 final class OverlayWindow: NSPanel {
     override init(
         contentRect: NSRect,

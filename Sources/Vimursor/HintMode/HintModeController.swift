@@ -7,7 +7,8 @@ private enum HintModeState {
 
 // CGEventTapスレッドからアクティブ状態だけを読めるよう分離
 // すべてのUI操作はメインスレッドで実行する
-final class HintModeController: @unchecked Sendable {
+@MainActor
+final class HintModeController {
     private let axManager = AXManager()
     private var state: HintModeState = .inactive
     private var hintView: HintView?
@@ -27,8 +28,9 @@ final class HintModeController: @unchecked Sendable {
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
         axManager.fetchClickableElements(in: appElement) { [weak self] elements in
-            // メインスレッドで呼ばれる
-            self?.startHintMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+            Task { @MainActor [weak self] in
+                self?.startHintMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+            }
         }
     }
 
@@ -55,10 +57,9 @@ final class HintModeController: @unchecked Sendable {
 
         // CGEventTapスレッドからキーを受け取り、メインスレッドで処理する
         hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
-            guard let self, self.isActive else { return false }
-            // メインスレッドで処理（UIアクセスのため）
-            DispatchQueue.main.async {
-                self.handleKey(keyCode: keyCode, flags: flags)
+            guard let self else { return false }
+            Task { @MainActor [weak self] in
+                self?.handleKey(keyCode: keyCode, flags: flags)
             }
             return true  // アクティブ中はすべてのキーを消費
         }
