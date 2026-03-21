@@ -28,7 +28,7 @@ struct SearchElementInfo: Sendable {
     }
 }
 
-final class AXManager {
+final class AXManager: @unchecked Sendable {
     /// バックグラウンドで列挙し、メインスレッドで completion を呼ぶ
     func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([AXElement]) -> Void) {
         let wrapped = AXElement(ref: app)
