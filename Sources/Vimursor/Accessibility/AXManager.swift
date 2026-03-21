@@ -41,6 +41,7 @@ final class AXManager {
         }
     }
 
+    @MainActor
     func buildUIElementInfos(elements: [AXElement], labels: [String]) -> [UIElementInfo] {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         var infos: [UIElementInfo] = []
@@ -58,6 +59,7 @@ final class AXManager {
         return infos
     }
 
+    @MainActor
     func fetchSearchableElements(
         in app: AXUIElement,
         completion: @escaping @Sendable ([SearchElementInfo]) -> Void
@@ -91,6 +93,7 @@ final class AXManager {
         AXUIElementPerformAction(element, "AXPress" as CFString)
     }
 
+    @MainActor
     func clickAt(frame: CGRect) {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         let point = AXManager.centerScreenPoint(from: frame, screenHeight: screenHeight)
