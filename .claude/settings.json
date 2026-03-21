@@ -1,9 +1,0 @@
-{
-  "allowedTools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Glob",
-    "Grep"
-  ]
-}
