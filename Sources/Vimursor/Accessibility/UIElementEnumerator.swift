@@ -3,8 +3,14 @@ import AppKit
 enum UIElementEnumerator {
     private static let clickableRoles: Set<String> = [
         "AXButton", "AXLink", "AXCheckBox", "AXRadioButton",
-        "AXMenuItem", "AXPopUpButton", "AXTextField", "AXComboBox",
-        "AXTab", "AXCell"
+        "AXMenuItem", "AXPopUpButton", "AXComboBox", "AXTab"
+    ]
+
+    // これらのロールはクリック不能と確定 → AXPress チェックをスキップして高速化
+    private static let skippableRoles: Set<String> = [
+        "AXStaticText", "AXImage", "AXSeparator", "AXScrollBar",
+        "AXScrollArea", "AXSplitter", "AXToolbar", "AXStatusBar",
+        "AXTable", "AXOutline", "AXList", "AXBrowser"
     ]
 
     static func enumerateClickableElements(root: AXUIElement) -> [AXUIElement] {
@@ -18,7 +24,7 @@ enum UIElementEnumerator {
         into result: inout [AXUIElement],
         depth: Int
     ) {
-        guard depth < 20 else { return }  // 無限再帰防止
+        guard depth < 25 else { return }  // 無限再帰防止
 
         if isClickable(element: element) {
             result.append(element)
@@ -33,11 +39,28 @@ enum UIElementEnumerator {
         }
     }
 
+    // ロール先頭チェックで IPC 呼び出し数を最小化
+    // skip-list → 1 IPC、clickableRoles → 2 IPC、不明ロール → 3 IPC（Electron 対応）
     private static func isClickable(element: AXUIElement) -> Bool {
         var roleRef: CFTypeRef?
-        let err = AXUIElementCopyAttributeValue(element, "AXRole" as CFString, &roleRef)
-        guard err == .success, let role = roleRef as? String else { return false }
-        return clickableRoles.contains(role)
+        if AXUIElementCopyAttributeValue(element, "AXRole" as CFString, &roleRef) == .success,
+           let role = roleRef as? String {
+            if skippableRoles.contains(role) { return false }
+            if clickableRoles.contains(role) { return isEnabled(element: element) }
+        }
+        guard isEnabled(element: element) else { return false }
+        var actionsRef: CFArray?
+        guard AXUIElementCopyActionNames(element, &actionsRef) == .success,
+              let actions = actionsRef as? [String] else { return false }
+        return actions.contains("AXPress")
+    }
+
+    // AXEnabled = false の要素はクリック不能なのでスキップ（属性なければ有効とみなす）
+    private static func isEnabled(element: AXUIElement) -> Bool {
+        var ref: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(element, "AXEnabled" as CFString, &ref) == .success,
+              let enabled = ref as? Bool else { return true }
+        return enabled
     }
 
     static func enumerateSearchableElements(root: AXUIElement) -> [AXUIElement] {

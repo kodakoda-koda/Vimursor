@@ -89,8 +89,23 @@ final class AXManager: @unchecked Sendable {
         }
     }
 
-    func click(element: AXUIElement) {
-        AXUIElementPerformAction(element, "AXPress" as CFString)
+    // カーソルを要素の中心に移動（視覚的フィードバック用）
+    @MainActor
+    func moveCursor(to frame: CGRect) {
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let point = AXManager.centerScreenPoint(from: frame, screenHeight: screenHeight)
+        let move = CGEvent(mouseEventSource: nil, mouseType: .mouseMoved,
+                           mouseCursorPosition: point, mouseButton: .left)
+        move?.post(tap: .cghidEventTap)
+    }
+
+    // AXPress（セマンティック）を試み、失敗時は座標クリックにフォールバック
+    @MainActor
+    func press(element: AXUIElement, frame: CGRect) {
+        moveCursor(to: frame)
+        if AXUIElementPerformAction(element, "AXPress" as CFString) != .success {
+            clickAt(frame: frame)
+        }
     }
 
     @MainActor
