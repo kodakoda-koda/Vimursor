@@ -98,10 +98,9 @@ final class HintModeController {
 
         if let exact = matches.first(where: { $0.label == newInput }) {
             let frame = exact.frame
-            let element = exact.axElement.ref
             deactivate()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                self?.axManager.press(element: element, frame: frame)
+                self?.axManager.clickAt(frame: frame)
             }
             return
         }
