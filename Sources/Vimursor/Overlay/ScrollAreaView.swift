@@ -31,6 +31,10 @@ final class ScrollAreaView: NSView {
     // AX スクリーン座標（原点:左上）→ NSView 座標（原点:左下）変換
     // 変換式: nsY = screenHeight - axY - axHeight
     func toNSViewFrame(_ axFrame: CGRect) -> CGRect {
+        ScrollAreaView.toNSViewFrame(axFrame, screenHeight: screenHeight)
+    }
+
+    nonisolated static func toNSViewFrame(_ axFrame: CGRect, screenHeight: CGFloat) -> CGRect {
         let nsY = screenHeight - axFrame.origin.y - axFrame.height
         return CGRect(x: axFrame.origin.x, y: nsY, width: axFrame.width, height: axFrame.height)
     }

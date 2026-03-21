@@ -1,12 +1,6 @@
 import AppKit
 import CoreGraphics
 
-struct ScrollAreaInfo {
-    let frame: CGRect        // AX スクリーン座標（描画変換用）
-    let centerPoint: CGPoint // CGEvent.location 用（変換不要、スクリーン座標のまま）
-    let label: String        // "1", "2", ...
-}
-
 private enum ScrollModeState {
     case inactive
     case fetching
@@ -65,13 +59,40 @@ final class ScrollModeController {
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
 
-        // fetching 中もキーを消費する（他モードへの漏れを防ぐ）
         hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
             guard let self else { return false }
-            Task { @MainActor [weak self] in
-                self?.handleKey(keyCode: keyCode, flags: flags)
+
+            let otherModifiers = flags.intersection([.maskCommand, .maskControl, .maskAlternate])
+            let isShift = flags.contains(.maskShift)
+
+            // ESC は常に消費
+            let shouldConsume: Bool
+            if keyCode == ScrollKeyCode.esc {
+                shouldConsume = true
+            } else if !otherModifiers.isEmpty {
+                // Cmd/Ctrl/Alt 付きはシステムに渡す（Cmd+Tab 等を妨げない）
+                shouldConsume = false
+            } else if keyCode == ScrollKeyCode.tab {
+                // Tab / Shift+Tab は消費
+                shouldConsume = true
+            } else if isShift {
+                // Shift 付きその他は消費しない
+                shouldConsume = false
+            } else {
+                // 数字キー・スクロールキーのみ消費
+                shouldConsume = ScrollKeyCode.numToIndex[keyCode] != nil
+                    || keyCode == ScrollKeyCode.j
+                    || keyCode == ScrollKeyCode.k
+                    || keyCode == ScrollKeyCode.d
+                    || keyCode == ScrollKeyCode.u
             }
-            return true
+
+            if shouldConsume {
+                Task { @MainActor [weak self] in
+                    self?.handleKey(keyCode: keyCode, flags: flags)
+                }
+            }
+            return shouldConsume
         }
 
         guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
@@ -136,19 +157,15 @@ final class ScrollModeController {
         }
 
         let isShift = flags.contains(.maskShift)
-        let otherModifiers = flags.intersection([.maskCommand, .maskControl, .maskAlternate])
 
-        // Tab / Shift+Tab: 領域切り替え
-        if keyCode == ScrollKeyCode.tab && otherModifiers.isEmpty {
+        // Tab / Shift+Tab: 領域切り替え（ハンドラ側で Cmd/Ctrl/Alt 付きは除外済み）
+        if keyCode == ScrollKeyCode.tab {
             let next = isShift
                 ? (selectedIndex - 1 + areas.count) % areas.count  // Shift+Tab: 逆順
                 : (selectedIndex + 1) % areas.count                 // Tab: 順送り
             selectArea(index: next, areas: areas)
             return
         }
-
-        // 修飾キー付きは以降を無視（Cmd+J 等のシステムショートカットとの競合防止）
-        guard otherModifiers.isEmpty && !isShift else { return }
 
         // 数字キー: 領域選択
         if let index = ScrollKeyCode.numToIndex[keyCode], index < areas.count {

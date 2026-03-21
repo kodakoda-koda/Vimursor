@@ -6,40 +6,39 @@ import CoreGraphics
 struct ScrollModeControllerTests {
 
     // MARK: - AX座標 → NSView座標 変換
+    // ScrollAreaView.toNSViewFrame(static) を通じて検証する
     // 変換式: nsY = screenHeight - axY - axHeight
-    // ScrollAreaView.toNSViewFrame と同一ロジックを純粋な数式でテストする
 
     @Test func axToNSViewYConversion() {
-        let screenHeight: CGFloat = 1000
-        let axY: CGFloat = 100
-        let height: CGFloat = 200
-        let nsY = screenHeight - axY - height
+        let axFrame = CGRect(x: 0, y: 100, width: 500, height: 200)
+        let nsFrame = ScrollAreaView.toNSViewFrame(axFrame, screenHeight: 1000)
         // nsY = 1000 - 100 - 200 = 700
-        #expect(nsY == 700)
+        #expect(nsFrame.origin.y == 700)
+        #expect(nsFrame.origin.x == 0)
+        #expect(nsFrame.width == 500)
+        #expect(nsFrame.height == 200)
     }
 
     @Test func axToNSViewYConversionTopOfScreen() {
-        let screenHeight: CGFloat = 800
-        let axY: CGFloat = 0
-        let height: CGFloat = 100
-        let nsY = screenHeight - axY - height
+        let axFrame = CGRect(x: 0, y: 0, width: 300, height: 100)
+        let nsFrame = ScrollAreaView.toNSViewFrame(axFrame, screenHeight: 800)
         // nsY = 800 - 0 - 100 = 700
-        #expect(nsY == 700)
+        #expect(nsFrame.origin.y == 700)
     }
 
     @Test func axToNSViewYConversionBottomOfScreen() {
-        let screenHeight: CGFloat = 800
-        let axY: CGFloat = 700
-        let height: CGFloat = 100
-        let nsY = screenHeight - axY - height
+        let axFrame = CGRect(x: 0, y: 700, width: 300, height: 100)
+        let nsFrame = ScrollAreaView.toNSViewFrame(axFrame, screenHeight: 800)
         // nsY = 800 - 700 - 100 = 0
-        #expect(nsY == 0)
+        #expect(nsFrame.origin.y == 0)
     }
 
     @Test func axToNSViewXIsUnchanged() {
-        // x 座標は変換不要（スクリーン左端を共有）
-        let axX: CGFloat = 250
-        #expect(axX == 250)
+        let axFrame = CGRect(x: 250, y: 100, width: 400, height: 300)
+        let nsFrame = ScrollAreaView.toNSViewFrame(axFrame, screenHeight: 1000)
+        #expect(nsFrame.origin.x == 250)
+        #expect(nsFrame.width == 400)
+        #expect(nsFrame.height == 300)
     }
 
     // MARK: - 数字キー → 0-based インデックス変換
@@ -67,24 +66,29 @@ struct ScrollModeControllerTests {
 
     // MARK: - Tab / Shift+Tab 循環ロジック
 
+    /// ScrollModeController の selectArea と同じ循環計算をヘルパーとして切り出す
+    private func nextIndex(current: Int, count: Int, direction: Int) -> Int {
+        (current + direction + count) % count
+    }
+
     @Test func tabCyclesForward() {
         let count = 3
-        #expect((0 + 1) % count == 1)
-        #expect((1 + 1) % count == 2)
-        #expect((2 + 1) % count == 0)  // 末尾 → 先頭へ循環
+        #expect(nextIndex(current: 0, count: count, direction: +1) == 1)
+        #expect(nextIndex(current: 1, count: count, direction: +1) == 2)
+        #expect(nextIndex(current: 2, count: count, direction: +1) == 0)  // 末尾 → 先頭へ循環
     }
 
     @Test func shiftTabCyclesBackward() {
         let count = 3
-        #expect((0 - 1 + count) % count == 2)  // 先頭 → 末尾へ循環
-        #expect((1 - 1 + count) % count == 0)
-        #expect((2 - 1 + count) % count == 1)
+        #expect(nextIndex(current: 0, count: count, direction: -1) == 2)  // 先頭 → 末尾へ循環
+        #expect(nextIndex(current: 1, count: count, direction: -1) == 0)
+        #expect(nextIndex(current: 2, count: count, direction: -1) == 1)
     }
 
     @Test func tabCyclesWithSingleArea() {
         let count = 1
-        #expect((0 + 1) % count == 0)          // Tab: 自分自身に戻る
-        #expect((0 - 1 + count) % count == 0)  // Shift+Tab: 同様
+        #expect(nextIndex(current: 0, count: count, direction: +1) == 0)  // Tab: 自分自身に戻る
+        #expect(nextIndex(current: 0, count: count, direction: -1) == 0)  // Shift+Tab: 同様
     }
 
     // MARK: - ScrollAreaInfo のラベル生成
