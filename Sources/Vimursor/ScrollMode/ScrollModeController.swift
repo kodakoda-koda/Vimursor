@@ -3,15 +3,22 @@ import CoreGraphics
 
 private enum ScrollModeState {
     case inactive
-    case active
+    case fetching
+    case active(areas: [ScrollAreaInfo], selectedIndex: Int)
 }
 
-private enum ScrollKeyCode {
-    static let esc: CGKeyCode = 53
-    static let j: CGKeyCode = 38
-    static let k: CGKeyCode = 40
-    static let d: CGKeyCode = 2
-    static let u: CGKeyCode = 32
+enum ScrollKeyCode {
+    static let esc: CGKeyCode  = 53
+    static let tab: CGKeyCode  = 48
+    static let j: CGKeyCode    = 38
+    static let k: CGKeyCode    = 40
+    static let d: CGKeyCode    = 2
+    static let u: CGKeyCode    = 32
+    // 数字 1〜9（US キーボード）
+    static let numToIndex: [CGKeyCode: Int] = [
+        18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
+        22: 5, 26: 6, 28: 7, 25: 8
+    ]
 }
 
 @MainActor
@@ -20,6 +27,7 @@ private final class ScrollIndicatorView: NSView {
         super.init(frame: frame)
         wantsLayer = true
     }
+
     required init?(coder: NSCoder) { fatalError() }
 
     override func draw(_ dirtyRect: NSRect) {
@@ -40,46 +48,93 @@ private final class ScrollIndicatorView: NSView {
 @MainActor
 final class ScrollModeController {
     private var state: ScrollModeState = .inactive
-    private var isActive: Bool = false
+    private var scrollAreaView: ScrollAreaView?
     private var indicatorView: ScrollIndicatorView?
     private weak var overlayWindow: OverlayWindow?
     private weak var hotkeyManager: HotkeyManager?
-    private var currentTargetPoint: CGPoint? = nil
 
     func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
-        guard !isActive else { return }
+        guard case .inactive = state else { return }
+        state = .fetching
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
-        state = .active
-        isActive = true
-
-        let indicator = ScrollIndicatorView(frame: CGRect(x: 12, y: 12, width: 80, height: 28))
-        overlayWindow.contentView?.addSubview(indicator)
-        self.indicatorView = indicator
-        overlayWindow.show()
 
         hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
             guard let self else { return false }
-            Task { @MainActor [weak self] in
-                self?.handleKey(keyCode: keyCode, flags: flags)
+
+            let otherModifiers = flags.intersection([.maskCommand, .maskControl, .maskAlternate])
+            let isShift = flags.contains(.maskShift)
+
+            // ESC は常に消費
+            let shouldConsume: Bool
+            if keyCode == ScrollKeyCode.esc {
+                shouldConsume = true
+            } else if !otherModifiers.isEmpty {
+                // Cmd/Ctrl/Alt 付きはシステムに渡す（Cmd+Tab 等を妨げない）
+                shouldConsume = false
+            } else if keyCode == ScrollKeyCode.tab {
+                // Tab / Shift+Tab は消費
+                shouldConsume = true
+            } else if isShift {
+                // Shift 付きその他は消費しない
+                shouldConsume = false
+            } else {
+                // 数字キー・スクロールキーのみ消費
+                shouldConsume = ScrollKeyCode.numToIndex[keyCode] != nil
+                    || keyCode == ScrollKeyCode.j
+                    || keyCode == ScrollKeyCode.k
+                    || keyCode == ScrollKeyCode.d
+                    || keyCode == ScrollKeyCode.u
             }
-            return true
+
+            if shouldConsume {
+                Task { @MainActor [weak self] in
+                    self?.handleKey(keyCode: keyCode, flags: flags)
+                }
+            }
+            return shouldConsume
         }
 
-        // バックグラウンドでスクロール対象の中心点を取得
-        guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return }
+        guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
+            deactivate()
+            return
+        }
         let appElement = AXElement(ref: AXUIElementCreateApplication(focusedApp.processIdentifier))
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let target = ScrollTarget.findScrollableElement(in: appElement.ref)
-            let point = target.flatMap { ScrollTarget.centerPoint(of: $0) }
-            DispatchQueue.main.async { self?.currentTargetPoint = point }
+            let areas = ScrollTarget.enumerateScrollableElements(root: appElement.ref)
+            DispatchQueue.main.async { self?.startScrollMode(areas: areas) }
         }
     }
 
+    private func startScrollMode(areas: [ScrollAreaInfo]) {
+        guard case .fetching = state else { return }
+
+        if areas.isEmpty {
+            deactivate()
+            return
+        }
+
+        state = .active(areas: areas, selectedIndex: 0)
+
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let viewFrame = overlayWindow?.contentView?.bounds ?? .zero
+        let areaView = ScrollAreaView(screenHeight: screenHeight, frame: viewFrame)
+        areaView.autoresizingMask = [.width, .height]
+        areaView.update(areas: areas, selectedIndex: 0)
+        overlayWindow?.contentView?.addSubview(areaView)
+        self.scrollAreaView = areaView
+
+        let indicator = ScrollIndicatorView(frame: CGRect(x: 12, y: 12, width: 80, height: 28))
+        overlayWindow?.contentView?.addSubview(indicator)
+        self.indicatorView = indicator
+
+        overlayWindow?.show()
+    }
+
     func deactivate() {
-        isActive = false
         state = .inactive
-        currentTargetPoint = nil
+        scrollAreaView?.removeFromSuperview()
+        scrollAreaView = nil
         indicatorView?.removeFromSuperview()
         indicatorView = nil
         hotkeyManager?.keyEventHandler = nil
@@ -87,25 +142,55 @@ final class ScrollModeController {
     }
 
     private func handleKey(keyCode: CGKeyCode, flags: CGEventFlags) {
+        // fetching 中は ESC のみ受け付ける
+        if case .fetching = state {
+            if keyCode == ScrollKeyCode.esc { deactivate() }
+            return
+        }
+
+        guard case .active(let areas, let selectedIndex) = state else { return }
+
+        // ESC: 終了（修飾キーに関わらず常に有効）
         if keyCode == ScrollKeyCode.esc {
             deactivate()
             return
         }
 
-        // 修飾キー付きは無視（Cmd+J 等のシステムショートカットとの競合防止）
-        guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
+        let isShift = flags.contains(.maskShift)
 
+        // Tab / Shift+Tab: 領域切り替え（ハンドラ側で Cmd/Ctrl/Alt 付きは除外済み）
+        if keyCode == ScrollKeyCode.tab {
+            let next = isShift
+                ? (selectedIndex - 1 + areas.count) % areas.count  // Shift+Tab: 逆順
+                : (selectedIndex + 1) % areas.count                 // Tab: 順送り
+            selectArea(index: next, areas: areas)
+            return
+        }
+
+        // 数字キー: 領域選択
+        if let index = ScrollKeyCode.numToIndex[keyCode], index < areas.count {
+            selectArea(index: index, areas: areas)
+            return
+        }
+
+        // スクロールキー
+        let targetPoint = areas[selectedIndex].centerPoint
         switch keyCode {
         case ScrollKeyCode.j:
-            ScrollEngine.scroll(amount: .step(direction: .down), targetPoint: currentTargetPoint)
+            ScrollEngine.scroll(amount: .step(direction: .down), targetPoint: targetPoint)
         case ScrollKeyCode.k:
-            ScrollEngine.scroll(amount: .step(direction: .up), targetPoint: currentTargetPoint)
+            ScrollEngine.scroll(amount: .step(direction: .up), targetPoint: targetPoint)
         case ScrollKeyCode.d:
-            ScrollEngine.scroll(amount: .halfPage(direction: .down), targetPoint: currentTargetPoint)
+            ScrollEngine.scroll(amount: .halfPage(direction: .down), targetPoint: targetPoint)
         case ScrollKeyCode.u:
-            ScrollEngine.scroll(amount: .halfPage(direction: .up), targetPoint: currentTargetPoint)
+            ScrollEngine.scroll(amount: .halfPage(direction: .up), targetPoint: targetPoint)
         default:
             break
         }
+    }
+
+    private func selectArea(index: Int, areas: [ScrollAreaInfo]) {
+        state = .active(areas: areas, selectedIndex: index)
+        scrollAreaView?.update(areas: areas, selectedIndex: index)
     }
 }
