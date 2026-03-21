@@ -23,7 +23,10 @@ final class HintModeController {
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
 
-        guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return }
+        guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
+            state = .inactive
+            return
+        }
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
         axManager.fetchClickableElements(in: appElement) { [weak self] elements in

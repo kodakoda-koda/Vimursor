@@ -34,32 +34,32 @@ struct LabelGeneratorTests {
     }
 
     // prefix-free: 全ラベルが同じ長さであること
-    @Test func testNoMixedLengthLabels() {
+    @Test func noMixedLengthLabels() {
         let labels = LabelGenerator.generateLabels(count: 20)
         let lengths = Set(labels.map { $0.count })
         #expect(lengths.count == 1, "全ラベルが同じ長さであること")
     }
 
     // セミコロンが含まれないこと
-    @Test func testNoSemicolon() {
+    @Test func noSemicolon() {
         let labels = LabelGenerator.generateLabels(count: 256)
         #expect(!labels.contains { $0.contains(";") })
     }
 
     // 16個以下は1文字ラベル
-    @Test func testSingleCharLabelsForSmallCount() {
+    @Test func singleCharLabelsForSmallCount() {
         let labels = LabelGenerator.generateLabels(count: 16)
         #expect(labels.allSatisfy { $0.count == 1 })
     }
 
     // 17個以上は全部2文字ラベル
-    @Test func testDoubleCharLabelsForLargeCount() {
+    @Test func doubleCharLabelsForLargeCount() {
         let labels = LabelGenerator.generateLabels(count: 17)
         #expect(labels.allSatisfy { $0.count == 2 })
     }
 
     // ラベルに重複がないこと（大量生成）
-    @Test func testLabelsAreUniqueForLargeCount() {
+    @Test func labelsAreUniqueForLargeCount() {
         let labels = LabelGenerator.generateLabels(count: 100)
         #expect(Set(labels).count == labels.count)
     }
