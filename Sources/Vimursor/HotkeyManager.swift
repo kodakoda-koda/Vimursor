@@ -72,11 +72,13 @@ final class HotkeyManager: @unchecked Sendable {
         let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags.intersection([.maskCommand, .maskShift, .maskAlternate, .maskControl])
 
-        // CGEvent から実際の入力文字を取得（Shift 状態を含む）
-        let unicodeString = Self.extractUnicodeString(from: event)
-
-        if let handler = keyEventHandler, handler(keyCode, flags, unicodeString) {
-            return nil  // HintModeが消費
+        if let handler = keyEventHandler {
+            // CGEvent から実際の入力文字を取得（Shift 状態を含む）
+            // ハンドラ未設定時は不要なので遅延実行する
+            let unicodeString = Self.extractUnicodeString(from: event)
+            if handler(keyCode, flags, unicodeString) {
+                return nil  // HintModeが消費
+            }
         }
 
         if keyCode == KeyCode.space && flags == ModifierFlags.cmdShift {

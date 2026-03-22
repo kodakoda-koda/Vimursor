@@ -67,7 +67,7 @@ final class SearchModeController {
         view.focusSearchField()
 
         // CGEventTap は ESC のみ処理（Enter は NSTextField デリゲートで処理）
-        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags, _ in
+        hotkeyManager.keyEventHandler = { [weak self] keyCode, _, _ in
             guard let self else { return false }
             // ESC (53) のみ消費
             guard keyCode == 53 else { return false }
