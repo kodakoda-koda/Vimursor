@@ -20,8 +20,8 @@ final class HotkeyManager: @unchecked Sendable {
 
     // CGEventTap スレッド（読み取り）とメインスレッド（書き込み）をまたぐため NSLock で保護
     private let handlerLock = NSLock()
-    private var _keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)?
-    var keyEventHandler: ((CGKeyCode, CGEventFlags) -> Bool)? {
+    private var _keyEventHandler: ((CGKeyCode, CGEventFlags, String) -> Bool)?
+    var keyEventHandler: ((CGKeyCode, CGEventFlags, String) -> Bool)? {
         get {
             handlerLock.lock()
             defer { handlerLock.unlock() }
@@ -72,8 +72,13 @@ final class HotkeyManager: @unchecked Sendable {
         let keyCode = CGKeyCode(event.getIntegerValueField(.keyboardEventKeycode))
         let flags = event.flags.intersection([.maskCommand, .maskShift, .maskAlternate, .maskControl])
 
-        if let handler = keyEventHandler, handler(keyCode, flags) {
-            return nil  // HintModeが消費
+        if let handler = keyEventHandler {
+            // CGEvent から実際の入力文字を取得（Shift 状態を含む）
+            // ハンドラ未設定時は不要なので遅延実行する
+            let unicodeString = Self.extractUnicodeString(from: event)
+            if handler(keyCode, flags, unicodeString) {
+                return nil  // HintModeが消費
+            }
         }
 
         if keyCode == KeyCode.space && flags == ModifierFlags.cmdShift {
@@ -98,5 +103,19 @@ final class HotkeyManager: @unchecked Sendable {
         }
 
         return Unmanaged.passRetained(event)
+    }
+
+    /// CGEvent から unicode 文字列を取得するユーティリティ
+    /// IME 通過前のキーコードレベルの文字を返す（Shift 状態は反映される）
+    private static func extractUnicodeString(from event: CGEvent) -> String {
+        var actualLength: Int = 0
+        var chars = [UniChar](repeating: 0, count: 4)
+        event.keyboardGetUnicodeString(
+            maxStringLength: 4,
+            actualStringLength: &actualLength,
+            unicodeString: &chars
+        )
+        guard actualLength > 0 else { return "" }
+        return String(utf16CodeUnits: Array(chars.prefix(actualLength)), count: actualLength)
     }
 }

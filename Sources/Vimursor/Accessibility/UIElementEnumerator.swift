@@ -74,7 +74,7 @@ enum UIElementEnumerator {
         into result: inout [AXUIElement],
         depth: Int
     ) {
-        guard depth < 20, result.count < 500 else { return }
+        guard depth < 30, result.count < 3000 else { return }
 
         var hiddenRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(element, "AXHidden" as CFString, &hiddenRef) == .success,

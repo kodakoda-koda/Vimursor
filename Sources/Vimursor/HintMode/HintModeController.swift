@@ -60,7 +60,7 @@ final class HintModeController {
         overlayWindow.show()
 
         // CGEventTapスレッドからキーを受け取り、メインスレッドで処理する
-        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
+        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags, _ in
             guard let self else { return false }
             Task { @MainActor [weak self] in
                 self?.handleKey(keyCode: keyCode, flags: flags)

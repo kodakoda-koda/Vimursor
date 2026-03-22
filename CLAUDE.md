@@ -117,10 +117,12 @@ swift test --enable-code-coverage  # カバレッジ付きテスト
 
 #### エージェントのツール権限
 
-`~/.claude/settings.json`（グローバル）と `.claude/settings.json`（プロジェクト）の両方で `Read`/`Write`/`Edit`/`Glob`/`Grep` を自動許可済み。
+`~/.claude/settings.json`（グローバル）と `.claude/settings.json`（プロジェクト）の両方で `permissions.allow` に `Read`/`Write`/`Edit`/`Glob`/`Grep` を設定済み。
 `Bash` はサブエージェントに付与しない。`swift build` / `swift test` 等のビルド・テスト実行はメインセッションで行う。
 
-*Rationale: `Bash` は `rm -rf` 等の破壊的コマンドを含むためサブエージェントには与えない。ファイル操作系ツールはグローバル設定で自動許可することでサブエージェントが確認なく実装できる。ビルド確認はメインセッションが責任を持つ。*
+**注意:** `allowedTools`（旧形式）ではなく `permissions.allow`（現行形式）を使うこと。旧形式はバックグラウンドエージェントで正しく認識されない。
+
+*Rationale: `Bash` は `rm -rf` 等の破壊的コマンドを含むためサブエージェントには与えない。ファイル操作系ツールは `permissions.allow` で自動許可することでサブエージェントが確認なく実装できる。ビルド確認はメインセッションが責任を持つ。*
 
 #### メインセッションでのファイル読み込みを最小化
 
