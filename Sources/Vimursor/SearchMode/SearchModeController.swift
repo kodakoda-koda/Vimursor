@@ -13,6 +13,7 @@ final class SearchModeController {
     private var searchView: SearchView?
     private weak var overlayWindow: OverlayWindow?
     private weak var hotkeyManager: HotkeyManager?
+    private var previousApp: NSRunningApplication?
 
     func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
         guard !isActive else { return }
@@ -20,6 +21,7 @@ final class SearchModeController {
         self.hotkeyManager = hotkeyManager
 
         guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return }
+        self.previousApp = focusedApp
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
         axManager.fetchSearchableElements(in: appElement) { [weak self] elements in
@@ -41,15 +43,36 @@ final class SearchModeController {
         let view = SearchView(frame: overlayWindow.contentView?.bounds ?? .zero)
         view.autoresizingMask = [.width, .height]
         view.update(query: "", matched: elements)
+
+        // テキスト変更のコールバック登録
+        view.onQueryChanged = { [weak self] newQuery in
+            Task { @MainActor [weak self] in
+                self?.applyQuery(newQuery)
+            }
+        }
+
+        // Enter 処理は NSTextField デリゲートに委譲（IME 変換確定 Enter との区別のため）
+        view.onEnterPressed = { [weak self] in
+            Task { @MainActor [weak self] in
+                self?.executeSearch()
+            }
+        }
+
         overlayWindow.contentView?.addSubview(view)
         searchView = view
 
-        overlayWindow.show()
+        // key window として表示し、NSTextField を first responder に
+        overlayWindow.showAsKeyWindow()
+        NSApp.activate(ignoringOtherApps: true)
+        view.focusSearchField()
 
-        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
+        // CGEventTap は ESC のみ処理（Enter は NSTextField デリゲートで処理）
+        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags, _ in
             guard let self else { return false }
+            // ESC (53) のみ消費
+            guard keyCode == 53 else { return false }
             Task { @MainActor [weak self] in
-                self?.handleKey(keyCode: keyCode, flags: flags)
+                self?.deactivate()
             }
             return true
         }
@@ -62,6 +85,8 @@ final class SearchModeController {
         searchView = nil
         hotkeyManager?.keyEventHandler = nil
         overlayWindow?.hide()
+        previousApp?.activate(options: [])
+        previousApp = nil
     }
 
     nonisolated static func filter(
@@ -73,52 +98,21 @@ final class SearchModeController {
         return elements.filter { $0.searchableText.contains(q) }
     }
 
-    private func handleKey(keyCode: CGKeyCode, flags: CGEventFlags) {
-        guard case .active(let elements, let query, _) = state else { return }
-
-        // ESC
-        if keyCode == 53 { deactivate(); return }
-
-        // Backspace
-        if keyCode == 51 {
-            let newQuery = String(query.dropLast())
-            let matched = SearchModeController.filter(elements: elements, query: newQuery)
-            state = .active(elements: elements, query: newQuery, matched: matched)
-            searchView?.update(query: newQuery, matched: matched)
-            return
+    /// Enter 確定時に先頭マッチをクリックする（NSTextField デリゲート経由で呼ばれる）
+    private func executeSearch() {
+        guard case .active(_, _, let matched) = state, let first = matched.first else { return }
+        let frame = first.frame
+        deactivate()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            self?.axManager.clickAt(frame: frame)
         }
-
-        // Enter / Space: 先頭マッチをクリック
-        if keyCode == 36 || keyCode == 49 {
-            guard case .active(_, _, let matched) = state, let first = matched.first else { return }
-            let frame = first.frame
-            deactivate()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                self?.axManager.clickAt(frame: frame)
-            }
-            return
-        }
-
-        // 修飾キー付きは無視
-        guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
-        guard let char = keyCodeToChar(keyCode) else { return }
-
-        let newQuery = query + char
-        let matched = SearchModeController.filter(elements: elements, query: newQuery)
-        state = .active(elements: elements, query: newQuery, matched: matched)
-        searchView?.update(query: newQuery, matched: matched)
     }
 
-    private func keyCodeToChar(_ keyCode: CGKeyCode) -> String? {
-        let map: [CGKeyCode: String] = [
-            0: "a", 11: "b", 8: "c", 2: "d", 14: "e",
-            3: "f", 5: "g", 4: "h", 34: "i", 38: "j",
-            40: "k", 37: "l", 46: "m", 45: "n", 31: "o",
-            35: "p", 12: "q", 15: "r", 1: "s", 17: "t",
-            32: "u", 9: "v", 13: "w", 7: "x", 16: "y", 6: "z",
-            29: "0", 18: "1", 19: "2", 20: "3", 21: "4",
-            23: "5", 22: "6", 26: "7", 28: "8", 25: "9",
-        ]
-        return map[keyCode]
+    /// NSTextField からのクエリ更新（IME 確定後の文字列を受け取る）
+    private func applyQuery(_ query: String) {
+        guard case .active(let elements, _, _) = state else { return }
+        let matched = SearchModeController.filter(elements: elements, query: query)
+        state = .active(elements: elements, query: query, matched: matched)
+        searchView?.update(query: query, matched: matched)
     }
 }

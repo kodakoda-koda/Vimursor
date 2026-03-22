@@ -59,7 +59,7 @@ final class ScrollModeController {
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
 
-        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags in
+        hotkeyManager.keyEventHandler = { [weak self] keyCode, flags, _ in
             guard let self else { return false }
 
             let otherModifiers = flags.intersection([.maskCommand, .maskControl, .maskAlternate])

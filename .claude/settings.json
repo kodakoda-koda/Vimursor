@@ -1,9 +1,5 @@
 {
-  "allowedTools": [
-    "Read",
-    "Write",
-    "Edit",
-    "Glob",
-    "Grep"
-  ]
+  "permissions": {
+    "allow": ["Read", "Write", "Edit", "Glob", "Grep"]
+  }
 }

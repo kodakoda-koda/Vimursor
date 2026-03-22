@@ -73,4 +73,23 @@ struct SearchModeControllerTests {
         let result = SearchModeController.filter(elements: elements, query: "save")
         #expect(result.count == 2)
     }
+
+    @Test func filterWithUpperCaseQuery() {
+        let elements = [makeInfo(title: "Save")]
+        let result = SearchModeController.filter(elements: elements, query: "S")
+        #expect(result.count == 1)
+    }
+
+    @Test func filterWithSpaceInQuery() {
+        let elements = [makeInfo(title: "Open in New Tab"), makeInfo(title: "New Window")]
+        let result = SearchModeController.filter(elements: elements, query: "new tab")
+        #expect(result.count == 1)
+        #expect(result.first?.title == "Open in New Tab")
+    }
+
+    @Test func filterIsCaseInsensitiveForFullUpperCase() {
+        let elements = [makeInfo(title: "save file")]
+        let result = SearchModeController.filter(elements: elements, query: "SAVE")
+        #expect(result.count == 1)
+    }
 }

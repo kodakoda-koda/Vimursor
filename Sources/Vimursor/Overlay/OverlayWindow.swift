@@ -36,11 +36,22 @@ final class OverlayWindow: NSPanel {
         }
     }
 
+    // key window 化を許可（NSPanel のデフォルトは false）
+    override var canBecomeKey: Bool { true }
+
     func show() {
         orderFrontRegardless()
     }
 
+    // 検索モード用: key window として前面表示
+    func showAsKeyWindow() {
+        ignoresMouseEvents = false  // NSTextField がイベントを受信できるようにする
+        makeKeyAndOrderFront(nil)
+    }
+
     func hide() {
+        if isKeyWindow { resignKey() }
+        ignoresMouseEvents = true  // 他のモード用にマウスイベント無視に戻す
         orderOut(nil)
     }
 }
