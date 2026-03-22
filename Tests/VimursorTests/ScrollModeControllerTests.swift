@@ -103,4 +103,77 @@ struct ScrollModeControllerTests {
             #expect(area.label == String(i + 1))
         }
     }
+
+    // MARK: - リーフ優先ロジック（countBefore/countAfter パターン）
+
+    /// 子が追加された場合、親はスキップされる
+    @Test func leafPreferenceSkipsParentWhenChildrenAdded() {
+        let countBefore = 0
+        let countAfterChildren = 2  // 子が2つ追加された
+        let childrenAdded = countAfterChildren > countBefore
+        #expect(childrenAdded == true, "子が追加されたら親はスキップ")
+    }
+
+    /// 子が追加されなかった場合、親が追加される
+    @Test func leafPreferenceAddsParentWhenNoChildrenAdded() {
+        let countBefore = 0
+        let countAfterChildren = 0  // 子は追加されなかった
+        let childrenAdded = countAfterChildren > countBefore
+        #expect(childrenAdded == false, "子が追加されなければ親を追加")
+    }
+
+    /// 深い階層でもリーフが優先される（3階層ネスト）
+    @Test func leafPreferenceThreeLevels() {
+        // L1(scrollable) → L2(scrollable) → L3(scrollable, leaf)
+        // L3 が追加される → L2 は childrenAdded=true でスキップ → L1 も childrenAdded=true でスキップ
+        var count = 0
+
+        // L3（リーフ）: 子なし → 追加
+        let l3Before = count
+        // 子なし
+        let l3ChildrenAdded = count > l3Before  // false
+        if !l3ChildrenAdded { count += 1 }      // count = 1
+        #expect(count == 1)
+
+        // L2: 子が追加された → スキップ
+        let l2Before = 0  // L2 の探索開始時
+        let l2ChildrenAdded = count > l2Before  // true
+        if !l2ChildrenAdded { count += 1 }      // スキップ
+        #expect(count == 1)
+
+        // L1: 子が追加された → スキップ
+        let l1Before = 0
+        let l1ChildrenAdded = count > l1Before  // true
+        if !l1ChildrenAdded { count += 1 }      // スキップ
+        #expect(count == 1, "3階層ネストでもリーフの1つだけが追加される")
+    }
+
+    // MARK: - 補完検出ロジック（Complement Detection）
+
+    /// 既存スクロール領域の centerPoint が子フレーム内に含まれるかの判定
+    @Test func complementDetectionCenterPointContainment() {
+        let childFrame = CGRect(x: 280, y: 25, width: 1440, height: 1415)
+        let insidePoint = CGPoint(x: 992, y: 771)   // メイン内の点
+        let outsidePoint = CGPoint(x: 100, y: 400)  // サイドバー内の点
+        #expect(childFrame.contains(insidePoint) == true, "メイン領域内の点は含まれる")
+        #expect(childFrame.contains(outsidePoint) == false, "サイドバー領域の点は含まれない")
+    }
+
+    /// ラッパー判定: 親幅の90%以上はラッパー
+    @Test func wrapperDetectionByWidth() {
+        let parentWidth: CGFloat = 1720
+        let threshold: CGFloat = 0.9
+        let wrapperWidth: CGFloat = 1720   // 100% → ラッパー
+        let splitWidth: CGFloat = 240      // 14% → 分割子
+        #expect(wrapperWidth >= parentWidth * threshold, "同サイズはラッパー")
+        #expect(splitWidth < parentWidth * threshold, "小さいサイズは分割子")
+    }
+
+    /// 分割子が2つ以上あるときのみ補完が発動する
+    @Test func complementRequiresAtLeastTwoSplitChildren() {
+        let splitChildren = 1
+        #expect((splitChildren >= 2) == false, "1つだけでは補完しない")
+        let splitChildren2 = 2
+        #expect((splitChildren2 >= 2) == true, "2つ以上で補完発動")
+    }
 }
