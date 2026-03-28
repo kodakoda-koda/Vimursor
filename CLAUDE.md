@@ -6,7 +6,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 macOSをキーボードのみで操作できるツール（Homerowの代替OSS）。
 Swift + AppKit で実装。App Store非対応（Accessibility APIのためサンドボックス外配布）。
-実装計画: `docs/plans/overview.md`（概要）/ `docs/plans/mvp.md`（MVP詳細）
 
 ## Directory Structure
 
@@ -76,7 +75,10 @@ swift test --enable-code-coverage  # カバレッジ付きテスト
 - 非自明な手順には理由を添える
 - エージェントはセッションをまたいで記憶を持たないため、「読めばわかる」ドキュメントを目指す
 
-複数セッションにまたがる実装計画は `docs/plans/` に保存する（1セッションで完結する計画は一時領域でよい）。
+実装計画・タスクは GitHub Issue で管理する。
+- Epic（機能グループ）: `[Epic N]` 形式のタイトル、`epic` ラベル
+- タスク（個別実装）: `[N-M]` 形式のタイトル、`task` ラベル
+- Issue テンプレートは `.github/ISSUE_TEMPLATE/epic.md` / `task.md` を使用
 
 ### Context Management
 
