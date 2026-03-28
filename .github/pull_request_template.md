@@ -20,4 +20,4 @@
 ## チェックリスト
 
 - [ ] コミットメッセージが規則に従っている
-- [ ] `release/**` → `main` の PR の場合、開発用ファイル（`.claude/`, `CLAUDE.md`, `docs/plans/`）を削除している
+- [ ] `release/**` → `main` の PR の場合、開発用ファイル（`.claude/`, `CLAUDE.md`）を削除している

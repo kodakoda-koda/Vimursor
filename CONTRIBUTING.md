@@ -33,7 +33,7 @@ git checkout develop
 git checkout -b release/v1.0
 
 # 2. main に含めない開発用ファイルを削除してコミット
-git rm -r .claude/ CLAUDE.md docs/plans/
+git rm -r .claude/ CLAUDE.md
 git commit -m "chore: Remove dev-only files for release"
 
 # 3. release → main へ PR を出す
@@ -53,7 +53,6 @@ git push origin v1.0
 |----------------------|------|
 | `.claude/` | Claude Code 設定（開発ツール） |
 | `CLAUDE.md` | エージェント向けプロジェクト指示 |
-| `docs/plans/` | 実装計画（内部ドキュメント） |
 
 ## コミットメッセージ
 
