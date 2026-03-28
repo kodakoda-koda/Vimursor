@@ -6,7 +6,7 @@ Located in `~/.claude/agents/`:
 
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
-| planner | Implementation planning | 新機能・リファクタリングの計画を `docs/plans/` に作成するとき |
+| planner | Implementation planning | 新機能・リファクタリングの計画を GitHub Issue として作成するとき |
 | architect | System design | モジュール設計・依存関係・処理フローを決定するとき |
 | developer | Feature implementation | 計画に基づいて実際にコードを書くとき |
 | tdd-guide | Test-driven development | 新関数・バグ修正でテストファーストを強制したいとき |
@@ -72,7 +72,7 @@ tail -n 50 <output_file>
 必須項目:
 - ワーキングディレクトリ: /Users/souheikodama/Desktop/repos/Vimursor
 - 作成/修正するファイルの絶対パス（例: Sources/Vimursor/HotkeyManager.swift）
-- 参照すべき既存ファイルのパス（例: docs/plans/mvp.md の Phase 1 参照）
+- 参照すべき既存ファイルのパス（例: Sources/Vimursor/HotkeyManager.swift）または Issue 番号
 - 実行すべきコマンド（swift build / swift test 等）
 - 完了条件（何が通れば成功か）
 ```
