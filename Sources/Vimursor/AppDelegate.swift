@@ -29,6 +29,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let overlay = self.overlayWindow,
                   let hotkey = self.hotkeyManager,
                   hotkey.keyEventHandler == nil else { return }
+            AXManager.enableManualAccessibility()
             self.hintModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         manager.onSearchModeActivated = { [weak self] in
