@@ -101,6 +101,24 @@ final class AXManager: @unchecked Sendable {
         up?.post(tap: .cghidEventTap)
     }
 
+    /// フォーカスアプリに AXManualAccessibility を設定し、Electron の完全な AX ツリーを有効にする。
+    /// ネイティブアプリでは attributeUnsupported が返るが、副作用なし。
+    static func enableManualAccessibility() {
+        guard let app = NSWorkspace.shared.frontmostApplication else { return }
+        let appElement = AXUIElementCreateApplication(app.processIdentifier)
+        let result = AXUIElementSetAttributeValue(
+            appElement,
+            "AXManualAccessibility" as CFString,
+            true as CFTypeRef
+        )
+        switch result {
+        case .success, .attributeUnsupported:
+            break
+        default:
+            NSLog("AXManager.enableManualAccessibility: AXUIElementSetAttributeValue failed with error: \(String(describing: result)) (rawValue: \(result.rawValue))")
+        }
+    }
+
     /// NSWindow 座標系（原点:左下）の frame をスクリーン座標系（原点:左上）の中心点に変換する
     /// テスト用に static で公開
     static func centerScreenPoint(from frame: CGRect, screenHeight: CGFloat) -> CGPoint {
