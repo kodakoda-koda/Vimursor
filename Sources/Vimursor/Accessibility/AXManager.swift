@@ -106,12 +106,17 @@ final class AXManager: @unchecked Sendable {
     static func enableManualAccessibility() {
         guard let app = NSWorkspace.shared.frontmostApplication else { return }
         let appElement = AXUIElementCreateApplication(app.processIdentifier)
-        // 戻り値は無視（ネイティブアプリでは attributeUnsupported が返る）
-        AXUIElementSetAttributeValue(
+        let result = AXUIElementSetAttributeValue(
             appElement,
             "AXManualAccessibility" as CFString,
             true as CFTypeRef
         )
+        switch result {
+        case .success, .attributeUnsupported:
+            break
+        default:
+            NSLog("AXManager.enableManualAccessibility: AXUIElementSetAttributeValue failed with error: \(String(describing: result)) (rawValue: \(result.rawValue))")
+        }
     }
 
     /// NSWindow 座標系（原点:左下）の frame をスクリーン座標系（原点:左上）の中心点に変換する
