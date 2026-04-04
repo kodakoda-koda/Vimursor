@@ -32,6 +32,10 @@ VERSION="${VIMURSOR_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" "${CONTENTS}/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${CONTENTS}/Info.plist"
 
+echo "==> Signing bundle (ad-hoc)..."
+xattr -cr "${APP_BUNDLE}"
+codesign -s - -f --deep "${APP_BUNDLE}"
+
 echo "==> Validating bundle..."
 plutil -lint "${CONTENTS}/Info.plist"
 
