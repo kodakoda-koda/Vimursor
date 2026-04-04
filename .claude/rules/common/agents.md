@@ -2,7 +2,7 @@
 
 ## Available Agents
 
-Located in `~/.claude/agents/`:
+Located in `.claude/agents/`:
 
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
@@ -24,66 +24,28 @@ No user prompt needed:
 
 ## Parallel Task Execution
 
-ALWAYS use parallel Task execution for independent operations:
+独立した作業は並列でエージェントを起動する。
 
-```markdown
-# GOOD: Parallel execution
-Launch 3 agents in parallel:
-1. Agent 1: Security analysis of auth module
-2. Agent 2: Performance review of cache system
-3. Agent 3: Type checking of utilities
+## Agent Prompt Requirements
 
-# BAD: Sequential when unnecessary
-First agent 1, then agent 2, then agent 3
-```
+サブエージェントはメインセッションの会話履歴を持たない。プロンプトに以下を必ず含める：
 
-## Background Execution (Context Preservation)
+- **ワーキングディレクトリ**: `/Users/souheikodama/Desktop/repos/Vimursor`
+- **対象ファイルの絶対パス**: 作成・修正するファイルを明示
+- **参照ファイルのパス**: 読むべき既存コード、または Issue 番号
+- **完了条件**: 何が通れば成功か
 
-実装系エージェントは必ず `run_in_background: true` で起動する：
+*Rationale: コンテキストが不足したエージェントは手探りになり失敗率が上がる。プロンプトが自己完結していれば成功率が大幅に上がる。*
 
-| Agent | Background | Rationale |
-|-------|-----------|-----------|
-| developer | **YES** | 実装コード・テスト出力がメインコンテキストを圧迫するため |
-| tdd-guide | **YES** | 同上 |
-| code-reviewer | **YES** | レビューレポートが長大になるため |
-| planner | NO | 計画書はメインセッションで承認が必要なため |
-| architect | NO | 設計判断はユーザー確認が必要なため |
+## Tool Permissions
 
-**例外: セットアップ系タスクはフォアグラウンドで実行する**
+`permissions.allow`（`.claude/settings.json` および `~/.claude/settings.json`）で以下を自動承認済み：
 
-`swift package init` / `git init` など、後続エージェントが依存する環境構築はフォアグラウンドで実行し、完了を確認してからエージェントを起動する。
+- `Read` / `Write` / `Edit` / `Glob` / `Grep`
+- `Bash(swift build*)` / `Bash(swift test*)` — ビルド・テスト
+- `Bash(git *)` — git 操作
+- `Bash(cat/ls/head/tail *)` — ファイル閲覧
 
-*Rationale: バックグラウンドエージェントが `Package.swift` や `Sources/` の存在を前提に動作するため、環境未構築のまま起動すると即座に失敗する。*
+破壊的コマンド（`rm`、`sudo` 等）は許可しない。
 
-起動後の確認方法：
-
-```bash
-# 出力ファイルの末尾のみ読む（Bash tool）
-tail -n 50 <output_file>
-```
-
-完全な出力が必要な場合のみ `Read` tool で出力ファイルを開く。
-
-## Background Agent Prompt Requirements
-
-バックグラウンドエージェントはメインセッションの会話履歴を持たない。プロンプトに以下を必ず含める：
-
-```
-必須項目:
-- ワーキングディレクトリ: /Users/souheikodama/Desktop/repos/Vimursor
-- 作成/修正するファイルの絶対パス（例: Sources/Vimursor/HotkeyManager.swift）
-- 参照すべき既存ファイルのパス（例: Sources/Vimursor/HotkeyManager.swift）または Issue 番号
-- 実行すべきコマンド（swift build / swift test 等）
-- 完了条件（何が通れば成功か）
-```
-
-*Rationale: コンテキストが不足したエージェントは手探りになり、誤ったファイルを作成したり途中で失敗したりする。プロンプトが自己完結していれば成功率が大幅に上がる。*
-
-## Multi-Perspective Analysis
-
-For complex problems, use split role sub-agents:
-- Factual reviewer
-- Senior engineer
-- Security expert
-- Consistency reviewer
-- Redundancy checker
+*Rationale: ビルド・テスト・ファイル閲覧は安全な操作であり自動承認することでエージェントの作業効率が上がる。破壊的コマンドは承認プロンプトで防御する。*

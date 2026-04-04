@@ -19,16 +19,24 @@ You are a Test-Driven Development (TDD) specialist who ensures all Swift code is
 
 ### 1. Write Test First (RED)
 
-XCTest でテストを書く（テストターゲットは `Tests/VimursorTests/`）:
+Swift Testing フレームワークでテストを書く（テストターゲットは `Tests/VimursorTests/`）:
 
 ```swift
-import XCTest
+import Testing
 @testable import Vimursor
 
-final class LabelGeneratorTests: XCTestCase {
-    func testGeneratesCorrectCount() {
+@Suite("LabelGenerator Tests")
+struct LabelGeneratorTests {
+    @Test("generates correct count of labels")
+    func generatesCorrectCount() {
         let labels = LabelGenerator.generate(count: 5)
-        XCTAssertEqual(labels.count, 5)
+        #expect(labels.count == 5)
+    }
+
+    @Test("empty input returns empty labels")
+    func emptyInput() {
+        let labels = LabelGenerator.generate(count: 0)
+        #expect(labels.isEmpty)
     }
 }
 ```
@@ -64,7 +72,7 @@ swift test --enable-code-coverage
 
 | 対象 | テスト方法 |
 |------|-----------|
-| LabelGenerator 等純粋ロジック | XCTest で直接テスト |
+| LabelGenerator 等純粋ロジック | Swift Testing で直接テスト |
 | AXUIElement 呼び出し | プロトコルでラップしてモック差し替え |
 | NSPanel・CGEventTap | システム依存のため手動テスト（自動化困難） |
 
@@ -77,7 +85,7 @@ protocol AccessibilityProvider {
 }
 
 // テスト用モック
-class MockAccessibilityProvider: AccessibilityProvider {
+struct MockAccessibilityProvider: AccessibilityProvider {
     var stubbedElements: [UIElementInfo] = []
     func fetchClickableElements() -> [UIElementInfo] { stubbedElements }
 }
@@ -94,9 +102,9 @@ class MockAccessibilityProvider: AccessibilityProvider {
 ## Test Anti-Patterns to Avoid
 
 - 実装の内部状態ではなく振る舞いをテストする
-- テスト間で状態を共有しない（setUp/tearDown を使う）
+- テスト間で状態を共有しない
 - システムAPIを直接呼び出すテストを書かない（モックを使う）
-- アサーションが曖昧なテスト（`XCTAssertNotNil` だけ等）
+- アサーションが曖昧なテスト（`#expect(value != nil)` だけ等）
 
 ## Quality Checklist
 
@@ -104,6 +112,6 @@ class MockAccessibilityProvider: AccessibilityProvider {
 - [ ] システムAPI呼び出しはモックでテストしている
 - [ ] エッジケースをカバーしている（空・境界値・無効値）
 - [ ] エラーパスをテストしている（ハッピーパスだけでない）
-- [ ] テストは独立している（setUp/tearDown で状態リセット）
+- [ ] テストは独立している
 - [ ] アサーションが具体的で意味がある
 - [ ] カバレッジが80%以上

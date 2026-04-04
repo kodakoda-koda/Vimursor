@@ -1,9 +1,23 @@
 # Contributing to Vimursor
 
+## Issue 管理
+
+開発は GitHub Issue を起点に進めます。
+
+| ラベル | 用途 | タイトル例 |
+|--------|------|-----------|
+| `epic` | 機能グループ・マイルストーン | `[Epic 3] 配布基盤` |
+| `task` | 個別の実装タスク（Epic の子） | `[3-1] .appバンドル化` |
+| `memo` | 技術的知見・調査記録 | `[memo] AX座標系の変換` |
+| `bug` | バグ報告 | `[bug] ヒントラベルが表示されない` |
+| `enhancement` | 機能要望 | `[request] ダークモード対応` |
+
+PR は対応する Issue 番号を紐づけてください。
+
 ## ブランチ運用
 
 ```
-main           ── リリース済みの安定版（Sources/, Tests/, docs/ のみ）
+main           ── リリース済みの安定版
   └─ develop   ── 開発統合ブランチ
        ├─ feature/<name>  ── 機能単位の作業ブランチ
        ├─ fix/<name>      ── バグ修正ブランチ

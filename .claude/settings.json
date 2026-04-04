@@ -1,5 +1,18 @@
 {
   "permissions": {
-    "allow": ["Read", "Write", "Edit", "Glob", "Grep"]
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Glob",
+      "Grep",
+      "Bash(swift build*)",
+      "Bash(swift test*)",
+      "Bash(git *)",
+      "Bash(cat *)",
+      "Bash(ls *)",
+      "Bash(head *)",
+      "Bash(tail *)"
+    ]
   }
 }
