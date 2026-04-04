@@ -1,4 +1,7 @@
 import AppKit
+import os
+
+private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar")
 
 // MARK: - Constants
 
@@ -96,7 +99,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             systemSymbolName: "keyboard",
             accessibilityDescription: "Vimursor"
         ) else {
-            print("[StatusBarController] SF Symbol 'keyboard' の読み込みに失敗しました")
+            logger.warning("SF Symbol 'keyboard' の読み込みに失敗しました")
             return
         }
         icon.isTemplate = true

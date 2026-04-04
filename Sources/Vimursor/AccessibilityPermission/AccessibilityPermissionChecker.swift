@@ -12,6 +12,7 @@ protocol AccessibilityPermissionChecker {
 
 /// `AXIsProcessTrustedWithOptions` を使った本番実装。
 /// 権限確認ダイアログは表示しない（nil を渡す）。
+/// 代わりに AppDelegate.showPermissionAlert() でカスタム UI を提供する。
 struct SystemAccessibilityPermissionChecker: AccessibilityPermissionChecker {
     func isGranted() -> Bool {
         AXIsProcessTrustedWithOptions(nil)

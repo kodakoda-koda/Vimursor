@@ -1,5 +1,8 @@
 import Foundation
 import ServiceManagement
+import os
+
+private let logger = Logger(subsystem: "com.vimursor.app", category: "LoginItem")
 
 // MARK: - Protocol
 
@@ -18,6 +21,7 @@ protocol LoginItemService {
 // MARK: - Production implementation
 
 /// SMAppService.mainApp をラップした本番用実装。
+@MainActor
 struct SMLoginItemService: LoginItemService {
     var isEnabled: Bool {
         SMAppService.mainApp.status == .enabled
@@ -85,7 +89,7 @@ final class LoginItemManager {
         } catch {
             // ロールバック: SMAppService 操作が失敗したため UserDefaults を元に戻す
             defaults.set(!newValue, forKey: LoginItemDefaultsKey.launchAtLogin)
-            print("[LoginItemManager] ログインアイテムの変更に失敗: \(error)")
+            logger.error("ログインアイテムの変更に失敗: \(error.localizedDescription)")
         }
     }
 
