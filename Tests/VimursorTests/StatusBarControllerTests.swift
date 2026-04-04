@@ -86,8 +86,9 @@ struct StatusBarControllerTests {
             onSearchMode: {},
             onScrollMode: {}
         )
-        // Hint Mode, Search Mode, Scroll Mode, separator, About, separator, Quit = 7 items
-        #expect(mockItem.menu?.items.count == 7)
+        // Hint Mode, Search Mode, Scroll Mode, separator, About, separator,
+        // Launch at Login, separator, Quit = 9 items
+        #expect(mockItem.menu?.items.count == 9)
     }
 
     @Test("メニュータイトルが正しいこと")
@@ -105,6 +106,7 @@ struct StatusBarControllerTests {
         #expect(titles.contains("Search Mode"))
         #expect(titles.contains("Scroll Mode"))
         #expect(titles.contains("About Vimursor"))
+        #expect(titles.contains("Launch at Login"))
         #expect(titles.contains("Quit Vimursor"))
     }
 }

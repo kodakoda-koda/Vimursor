@@ -1,5 +1,11 @@
 import AppKit
 
+// MARK: - Constants
+
+private enum MenuItemTag {
+    static let launchAtLogin = 100
+}
+
 // MARK: - Protocol
 
 /// NSStatusItem のテスト用抽象化。
@@ -34,7 +40,7 @@ final class SystemStatusItem: StatusItemProvider {
 /// メニューバー常駐アイコンとメニューを管理するコントローラ。
 /// NSStatusItem のライフタイムを保持し、各モードの起動をコールバックに委譲する。
 @MainActor
-final class StatusBarController {
+final class StatusBarController: NSObject, NSMenuDelegate {
 
     // MARK: - Private properties
 
@@ -42,6 +48,7 @@ final class StatusBarController {
     private let onHintMode: () -> Void
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
+    private let loginItemManager: LoginItemManager?
 
     // MARK: - Initialization
 
@@ -49,13 +56,15 @@ final class StatusBarController {
     convenience init(
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
-        onScrollMode: @escaping () -> Void
+        onScrollMode: @escaping () -> Void,
+        loginItemManager: LoginItemManager? = nil
     ) {
         self.init(
             statusItem: SystemStatusItem(),
             onHintMode: onHintMode,
             onSearchMode: onSearchMode,
-            onScrollMode: onScrollMode
+            onScrollMode: onScrollMode,
+            loginItemManager: loginItemManager
         )
     }
 
@@ -64,12 +73,16 @@ final class StatusBarController {
         statusItem: any StatusItemProvider,
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
-        onScrollMode: @escaping () -> Void
+        onScrollMode: @escaping () -> Void,
+        loginItemManager: LoginItemManager? = nil
     ) {
         self.statusItem = statusItem
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
+        self.loginItemManager = loginItemManager
+
+        super.init()
 
         configureButton()
         configureMenu()
@@ -135,6 +148,18 @@ final class StatusBarController {
 
         menu.addItem(.separator())
 
+        // ── Launch at Login ───────────────────────
+        let launchAtLoginItem = NSMenuItem(
+            title: "Launch at Login",
+            action: #selector(toggleLaunchAtLogin),
+            keyEquivalent: ""
+        )
+        launchAtLoginItem.target = self
+        launchAtLoginItem.tag = MenuItemTag.launchAtLogin
+        menu.addItem(launchAtLoginItem)
+
+        menu.addItem(.separator())
+
         // ── Quit ──────────────────────────────────
         let quitItem = NSMenuItem(
             title: "Quit Vimursor",
@@ -145,7 +170,17 @@ final class StatusBarController {
         quitItem.target = self
         menu.addItem(quitItem)
 
+        menu.delegate = self
         statusItem.menu = menu
+    }
+
+    // MARK: - NSMenuDelegate
+
+    func menuWillOpen(_ menu: NSMenu) {
+        if let item = menu.item(withTag: MenuItemTag.launchAtLogin) {
+            item.isEnabled = loginItemManager != nil
+            item.state = loginItemManager?.isEnabled == true ? .on : .off
+        }
     }
 
     // MARK: - Menu actions
@@ -164,6 +199,10 @@ final class StatusBarController {
 
     @objc private func showAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
+    }
+
+    @objc private func toggleLaunchAtLogin() {
+        loginItemManager?.toggle()
     }
 
     @objc private func quitApp() {
