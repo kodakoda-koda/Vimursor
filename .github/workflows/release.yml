@@ -16,8 +16,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Test
+        run: swift test
+
       - name: Build .app bundle
-        run: bash scripts/build-app.sh
+        run: |
+          export VIMURSOR_VERSION="${GITHUB_REF_NAME#v}"
+          bash scripts/build-app.sh
 
       - name: Build dmg
         run: bash scripts/build-dmg.sh
