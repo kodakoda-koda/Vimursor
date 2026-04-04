@@ -43,9 +43,8 @@ No user prompt needed:
 
 - `Read` / `Write` / `Edit` / `Glob` / `Grep`
 - `Bash(swift build*)` / `Bash(swift test*)` — ビルド・テスト
-- `Bash(git *)` — git 操作
-- `Bash(cat/ls/head/tail *)` — ファイル閲覧
+- `Bash(git status*)` / `Bash(git diff*)` / `Bash(git log*)` — git 読み取り
 
-破壊的コマンド（`rm`、`sudo` 等）は許可しない。
+git の書き込み操作（commit, push, reset 等）および破壊的コマンド（`rm`、`sudo` 等）はメインセッションでのみ実行する。
 
-*Rationale: ビルド・テスト・ファイル閲覧は安全な操作であり自動承認することでエージェントの作業効率が上がる。破壊的コマンドは承認プロンプトで防御する。*
+*Rationale: サブエージェントには読み取り系のみ許可し、リポジトリ状態の変更はメインセッションが責任を持つ。*

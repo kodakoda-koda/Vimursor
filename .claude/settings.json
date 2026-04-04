@@ -8,11 +8,9 @@
       "Grep",
       "Bash(swift build*)",
       "Bash(swift test*)",
-      "Bash(git *)",
-      "Bash(cat *)",
-      "Bash(ls *)",
-      "Bash(head *)",
-      "Bash(tail *)"
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
     ]
   }
 }
