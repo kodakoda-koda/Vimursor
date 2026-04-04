@@ -64,6 +64,7 @@ struct LoginItemManagerTests {
     @MainActor
     func toggleDisablesLoginItem() {
         let mockService = MockLoginItemService()
+        mockService.systemEnabled = true
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
         defaults.set(true, forKey: LoginItemDefaultsKey.launchAtLogin)
         let manager = LoginItemManager(service: mockService, defaults: defaults)
@@ -104,6 +105,7 @@ struct LoginItemManagerTests {
     @MainActor
     func toggleRollsBackWhenDisableFails() {
         let mockService = MockLoginItemService()
+        mockService.systemEnabled = true
         mockService.shouldThrowOnDisable = true
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
         defaults.set(true, forKey: LoginItemDefaultsKey.launchAtLogin)

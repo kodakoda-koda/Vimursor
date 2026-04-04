@@ -181,8 +181,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         if let item = menu.item(withTag: MenuItemTag.launchAtLogin) {
-            item.isEnabled = loginItemManager != nil
-            item.state = loginItemManager?.isEnabled == true ? .on : .off
+            if let loginItemManager {
+                loginItemManager.syncWithSystem()
+                item.isEnabled = true
+                item.state = loginItemManager.isEnabled ? .on : .off
+            } else {
+                item.isEnabled = false
+                item.state = .off
+            }
         }
     }
 

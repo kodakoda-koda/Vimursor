@@ -75,9 +75,10 @@ final class LoginItemManager {
     // MARK: - Public methods
 
     /// ログイン時起動をトグルする。
-    /// UserDefaults を先に更新し、SMAppService への登録・解除を試みる。
-    /// 失敗した場合は UserDefaults をロールバックしてログを出力する。
+    /// まずシステム状態と同期してから反転し、SMAppService への登録・解除を試みる。
+    /// 失敗した場合は UserDefaults をシステム実態に再同期する。
     func toggle() {
+        syncWithSystem()
         let newValue = !isEnabled
         defaults.set(newValue, forKey: LoginItemDefaultsKey.launchAtLogin)
         do {
@@ -87,8 +88,8 @@ final class LoginItemManager {
                 try service.disable()
             }
         } catch {
-            // ロールバック: SMAppService 操作が失敗したため UserDefaults を元に戻す
-            defaults.set(!newValue, forKey: LoginItemDefaultsKey.launchAtLogin)
+            // ロールバック: SMAppService 操作が失敗したためシステム実態に再同期する
+            syncWithSystem()
             logger.error("ログインアイテムの変更に失敗: \(error.localizedDescription)")
         }
     }
