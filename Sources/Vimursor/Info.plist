@@ -3,14 +3,26 @@
   "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>LSUIElement</key>
-    <true/>
     <key>CFBundleIdentifier</key>
     <string>com.vimursor.app</string>
     <key>CFBundleName</key>
     <string>Vimursor</string>
+    <key>CFBundleDisplayName</key>
+    <string>Vimursor</string>
+    <key>CFBundleExecutable</key>
+    <string>Vimursor</string>
     <key>CFBundleVersion</key>
-    <string>1.0</string>
+    <string>0.9.0</string>
+    <key>CFBundleShortVersionString</key>
+    <string>0.9.0</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
     <key>NSAccessibilityUsageDescription</key>
     <string>Vimursor needs accessibility access to detect UI elements and simulate clicks.</string>
 </dict>
