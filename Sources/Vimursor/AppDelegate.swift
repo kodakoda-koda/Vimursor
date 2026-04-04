@@ -7,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hintModeController: HintModeController?
     private var searchModeController: SearchModeController?
     private var scrollModeController: ScrollModeController?
+    private var statusBarController: StatusBarController?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         checkAccessibilityPermission()
@@ -48,6 +49,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         self.hotkeyManager = manager
         manager.start()
+
+        self.statusBarController = StatusBarController(
+            onHintMode: { [weak self] in self?.hotkeyManager?.onHintModeActivated?() },
+            onSearchMode: { [weak self] in self?.hotkeyManager?.onSearchModeActivated?() },
+            onScrollMode: { [weak self] in self?.hotkeyManager?.onScrollModeActivated?() }
+        )
     }
 
     private func checkAccessibilityPermission() {
