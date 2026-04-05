@@ -4,7 +4,7 @@ enum HintModeDefaultsKey {
     static let continuousMode = "hintMode.continuousMode"
 }
 
-final class HintModeSettings {
+struct HintModeSettings {
     private let defaults: UserDefaults
 
     init(defaults: UserDefaults = .standard) {

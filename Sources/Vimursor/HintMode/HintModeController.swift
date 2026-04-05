@@ -23,7 +23,8 @@ final class HintModeController {
     private let settings: HintModeSettings
 
     static let reactivationDelay: TimeInterval = 0.3
-    private(set) var reactivationTask: Task<Void, Never>?
+    static let clickDelay: TimeInterval = 0.05
+    private(set) var reactivationTask: Task<Void, Error>?
 
     init(settings: HintModeSettings) {
         self.settings = settings
@@ -124,7 +125,7 @@ final class HintModeController {
             if settings.isContinuousMode {
                 enterRestartingState()
                 Task { @MainActor [weak self] in
-                    try? await Task.sleep(for: .milliseconds(50))
+                    try await Task.sleep(for: .seconds(Self.clickDelay))
                     guard let self else { return }
                     self.axManager.clickAt(frame: frame)
                     self.scheduleReactivation()
@@ -133,7 +134,7 @@ final class HintModeController {
                 // 単発モード: オーバーレイ非表示後にクリック送信（連続モードの enterRestartingState と同等の順序）
                 deactivate()
                 Task { @MainActor [weak self] in
-                    try? await Task.sleep(for: .milliseconds(50))
+                    try await Task.sleep(for: .seconds(Self.clickDelay))
                     self?.axManager.clickAt(frame: frame)
                 }
             }
@@ -154,8 +155,9 @@ final class HintModeController {
 
     private func scheduleReactivation() {
         reactivationTask = Task { @MainActor [weak self] in
-            try? await Task.sleep(for: .milliseconds(300))
-            guard let self, !Task.isCancelled, case .restarting = self.state else { return }
+            guard let self else { return }
+            try await Task.sleep(for: .seconds(Self.reactivationDelay))
+            guard case .restarting = self.state else { return }
             self.state = .inactive
             if let overlay = self.overlayWindow, let hotkey = self.hotkeyManager {
                 self.activate(overlayWindow: overlay, hotkeyManager: hotkey)
