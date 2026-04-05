@@ -37,7 +37,7 @@ struct AccessibilityPermissionMonitorTests {
             called = true
         }
 
-        // Timer は RunLoop 経由なので少し待つ
+        // 最初のポーリングが終わるまで待つ
         try await Task.sleep(nanoseconds: 200_000_000) // 0.2s
         monitor.stopPolling()
 

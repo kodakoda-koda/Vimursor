@@ -14,7 +14,7 @@ final class AccessibilityPermissionMonitor {
 
     private let checker: any AccessibilityPermissionChecker
     private let interval: TimeInterval
-    private var timer: Timer?
+    private var pollingTask: Task<Void, Never>?
     private var onGranted: (() -> Void)?
 
     // MARK: - Initialization
@@ -27,35 +27,34 @@ final class AccessibilityPermissionMonitor {
         self.interval = interval
     }
 
-    // NOTE: deinit では Timer の invalidate を行わない。
+    // NOTE: deinit では Task のキャンセルを行わない。
     // Swift 6 の deinit は nonisolated であり、@MainActor プロパティへの直接アクセスは不可。
     // MainActor.assumeIsolated はバックグラウンドスレッドからの解放時にクラッシュするリスクがある。
     // 呼び出し側が不要になったタイミングで stopPolling() を呼ぶこと。
 
     // MARK: - Public interface
 
-    /// ポーリングを開始する。権限が付与されたら `onGranted` を呼び出してタイマーを停止する。
-    /// すでにポーリング中の場合は先のタイマーを無効化してから再開する。
+    /// ポーリングを開始する。権限が付与されたら `onGranted` を呼び出してタスクを停止する。
+    /// すでにポーリング中の場合は先のタスクをキャンセルしてから再開する。
     /// - Parameter onGranted: 権限付与検出時に **メインスレッド** で呼ばれるクロージャ
     func startPolling(onGranted: @escaping () -> Void) {
         stopPolling()
         self.onGranted = onGranted
 
-        timer = Timer.scheduledTimer(
-            withTimeInterval: interval,
-            repeats: true
-        ) { [weak self] _ in
-            // Timer コールバックは @MainActor 外から来ることがあるため MainActor で実行
-            Task { @MainActor [weak self] in
-                self?.handleTimerFire()
+        pollingTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self else { return }
+                self.handleTimerFire()
+                guard !Task.isCancelled else { return }
+                try? await Task.sleep(nanoseconds: UInt64(self.interval * 1_000_000_000))
             }
         }
     }
 
     /// ポーリングを停止する。
     func stopPolling() {
-        timer?.invalidate()
-        timer = nil
+        pollingTask?.cancel()
+        pollingTask = nil
         onGranted = nil
     }
 
