@@ -20,9 +20,14 @@ final class HintModeController {
     private var hintView: HintView?
     private weak var overlayWindow: OverlayWindow?
     private weak var hotkeyManager: HotkeyManager?
+    private let settings: HintModeSettings
 
     static let reactivationDelay: TimeInterval = 0.3
     private(set) var reactivationTask: Task<Void, Never>?
+
+    init(settings: HintModeSettings) {
+        self.settings = settings
+    }
 
     func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
         guard case .inactive = state else { return }  // fetching / active 中はスキップ
@@ -116,12 +121,21 @@ final class HintModeController {
 
         if let exact = matches.first(where: { $0.label == newInput }) {
             let frame = exact.frame
-            enterRestartingState()
-            Task { @MainActor [weak self] in
-                try? await Task.sleep(for: .milliseconds(50))
-                guard let self else { return }
-                self.axManager.clickAt(frame: frame)
-                self.scheduleReactivation()
+            if settings.isContinuousMode {
+                enterRestartingState()
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    guard let self else { return }
+                    self.axManager.clickAt(frame: frame)
+                    self.scheduleReactivation()
+                }
+            } else {
+                // 単発モード: オーバーレイ非表示後にクリック送信（連続モードの enterRestartingState と同等の順序）
+                deactivate()
+                Task { @MainActor [weak self] in
+                    try? await Task.sleep(for: .milliseconds(50))
+                    self?.axManager.clickAt(frame: frame)
+                }
             }
             return
         }
