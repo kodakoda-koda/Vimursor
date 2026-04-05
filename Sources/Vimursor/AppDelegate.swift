@@ -10,7 +10,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var statusBarController: StatusBarController?
     private var permissionMonitor: AccessibilityPermissionMonitor?
     private var loginItemManager: LoginItemManager?
-    private var hintModeSettings: HintModeSettings?
 
     // MARK: - Constants
 
@@ -27,9 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let overlay = OverlayWindow()
         self.overlayWindow = overlay
 
-        let hintSettings = HintModeSettings()
-        self.hintModeSettings = hintSettings
-        self.hintModeController = HintModeController(settings: hintSettings)
+        self.hintModeController = HintModeController()
         self.searchModeController = SearchModeController()
         self.scrollModeController = ScrollModeController()
 
@@ -44,8 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onHintMode: { [weak self] in self?.hotkeyManager?.onHintModeActivated?() },
             onSearchMode: { [weak self] in self?.hotkeyManager?.onSearchModeActivated?() },
             onScrollMode: { [weak self] in self?.hotkeyManager?.onScrollModeActivated?() },
-            loginItemManager: loginManager,
-            hintModeSettings: hintSettings
+            loginItemManager: loginManager
         )
 
         // 権限チェック → 許可済みなら即 setupHotkeyManager、未許可なら Alert + ポーリング
