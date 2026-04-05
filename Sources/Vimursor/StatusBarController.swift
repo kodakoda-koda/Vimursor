@@ -7,6 +7,7 @@ private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar"
 
 private enum MenuItemTag {
     static let launchAtLogin = 100
+    static let continuousHintMode = 101
 }
 
 // MARK: - Protocol
@@ -52,6 +53,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
     private let loginItemManager: LoginItemManager?
+    private let hintModeSettings: HintModeSettings
 
     // MARK: - Initialization
 
@@ -60,14 +62,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
-        loginItemManager: LoginItemManager? = nil
+        loginItemManager: LoginItemManager? = nil,
+        hintModeSettings: HintModeSettings
     ) {
         self.init(
             statusItem: SystemStatusItem(),
             onHintMode: onHintMode,
             onSearchMode: onSearchMode,
             onScrollMode: onScrollMode,
-            loginItemManager: loginItemManager
+            loginItemManager: loginItemManager,
+            hintModeSettings: hintModeSettings
         )
     }
 
@@ -77,13 +81,15 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
-        loginItemManager: LoginItemManager? = nil
+        loginItemManager: LoginItemManager? = nil,
+        hintModeSettings: HintModeSettings
     ) {
         self.statusItem = statusItem
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
         self.loginItemManager = loginItemManager
+        self.hintModeSettings = hintModeSettings
 
         super.init()
 
@@ -151,6 +157,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         menu.addItem(.separator())
 
+        // ── Continuous Hint Mode ─────────────────
+        let continuousItem = NSMenuItem(
+            title: "Continuous Hint Mode",
+            action: #selector(toggleContinuousHintMode),
+            keyEquivalent: ""
+        )
+        continuousItem.target = self
+        continuousItem.tag = MenuItemTag.continuousHintMode
+        menu.addItem(continuousItem)
+
         // ── Launch at Login ───────────────────────
         let launchAtLoginItem = NSMenuItem(
             title: "Launch at Login",
@@ -180,6 +196,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     // MARK: - NSMenuDelegate
 
     func menuWillOpen(_ menu: NSMenu) {
+        if let item = menu.item(withTag: MenuItemTag.continuousHintMode) {
+            item.state = hintModeSettings.isContinuousMode ? .on : .off
+        }
+
         if let item = menu.item(withTag: MenuItemTag.launchAtLogin) {
             if let loginItemManager {
                 loginItemManager.syncWithSystem()
@@ -212,6 +232,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func toggleLaunchAtLogin() {
         loginItemManager?.toggle()
+    }
+
+    @objc private func toggleContinuousHintMode() {
+        hintModeSettings.toggle()
     }
 
     @objc private func quitApp() {
