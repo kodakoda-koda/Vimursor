@@ -4,6 +4,11 @@ private enum HintModeState {
     case inactive
     case fetching   // 要素取得中。この状態でも activate() を弾く
     case active(hints: [UIElementInfo], input: String)
+    case restarting // クリック後〜再起動待ち。ESC のみ受付
+}
+
+private enum HintKeyCode {
+    static let esc: CGKeyCode = 53
 }
 
 // CGEventTapスレッドからアクティブ状態だけを読めるよう分離
@@ -15,6 +20,15 @@ final class HintModeController {
     private var hintView: HintView?
     private weak var overlayWindow: OverlayWindow?
     private weak var hotkeyManager: HotkeyManager?
+    private let settings: HintModeSettings
+
+    static let reactivationDelay: TimeInterval = 0.3
+    static let clickDelay: TimeInterval = 0.05
+    private(set) var reactivationTask: Task<Void, Error>?
+
+    init(settings: HintModeSettings) {
+        self.settings = settings
+    }
 
     func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
         guard case .inactive = state else { return }  // fetching / active 中はスキップ
@@ -70,6 +84,8 @@ final class HintModeController {
     }
 
     func deactivate() {
+        reactivationTask?.cancel()
+        reactivationTask = nil
         state = .inactive
         hintView?.removeFromSuperview()
         hintView = nil
@@ -78,10 +94,15 @@ final class HintModeController {
     }
 
     private func handleKey(keyCode: CGKeyCode, flags: CGEventFlags) {
+        if case .restarting = state {
+            if keyCode == HintKeyCode.esc { deactivate() }  // ESC のみ受付
+            return  // 他のキーは消費して無視
+        }
+
         guard case .active(let hints, let input) = state else { return }
 
         // ESC
-        if keyCode == 53 {
+        if keyCode == HintKeyCode.esc {
             deactivate()
             return
         }
@@ -101,15 +122,47 @@ final class HintModeController {
 
         if let exact = matches.first(where: { $0.label == newInput }) {
             let frame = exact.frame
-            deactivate()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                self?.axManager.clickAt(frame: frame)
+            if settings.isContinuousMode {
+                enterRestartingState()
+                Task { @MainActor [weak self] in
+                    try await Task.sleep(for: .seconds(Self.clickDelay))
+                    guard let self else { return }
+                    self.axManager.clickAt(frame: frame)
+                    self.scheduleReactivation()
+                }
+            } else {
+                // 単発モード: オーバーレイ非表示後にクリック送信（連続モードの enterRestartingState と同等の順序）
+                deactivate()
+                Task { @MainActor [weak self] in
+                    try await Task.sleep(for: .seconds(Self.clickDelay))
+                    self?.axManager.clickAt(frame: frame)
+                }
             }
             return
         }
 
         state = .active(hints: hints, input: newInput)
         hintView?.update(hints: hints, inputPrefix: newInput)
+    }
+
+    private func enterRestartingState() {
+        state = .restarting
+        hintView?.removeFromSuperview()
+        hintView = nil
+        overlayWindow?.hide()
+        // keyEventHandler は維持（ホットキー誤発火防止 + ESC 受付）
+    }
+
+    private func scheduleReactivation() {
+        reactivationTask = Task { @MainActor [weak self] in
+            guard let self else { return }
+            try await Task.sleep(for: .seconds(Self.reactivationDelay))
+            guard case .restarting = self.state else { return }
+            self.state = .inactive
+            if let overlay = self.overlayWindow, let hotkey = self.hotkeyManager {
+                self.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+            }
+        }
     }
 
     private func keyCodeToChar(_ keyCode: CGKeyCode) -> String? {
