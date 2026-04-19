@@ -7,10 +7,6 @@ private enum HintModeState {
     case restarting // クリック後〜再起動待ち。ESC のみ受付
 }
 
-private enum HintKeyCode {
-    static let esc: CGKeyCode = 53
-}
-
 // CGEventTapスレッドからアクティブ状態だけを読めるよう分離
 // すべてのUI操作はメインスレッドで実行する
 @MainActor
@@ -102,14 +98,14 @@ final class HintModeController {
 
     private func handleKey(keyCode: CGKeyCode, flags: CGEventFlags) {
         if case .restarting = state {
-            if keyCode == HintKeyCode.esc { deactivate() }  // ESC のみ受付
+            if keyCode == KeyCodeMapping.escapeKeyCode { deactivate() }  // ESC のみ受付
             return  // 他のキーは消費して無視
         }
 
         guard case .active(let hints, let input) = state else { return }
 
         // ESC
-        if keyCode == HintKeyCode.esc {
+        if keyCode == KeyCodeMapping.escapeKeyCode {
             deactivate()
             return
         }
@@ -117,7 +113,7 @@ final class HintModeController {
         // 修飾キー付きは無視（Cmd+Tab等）
         guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
 
-        guard let char = keyCodeToChar(keyCode) else { return }
+        guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 
         let newInput = input + char
         let matches = hints.filter { $0.label.hasPrefix(newInput) }
@@ -186,17 +182,5 @@ final class HintModeController {
                 self.hotkeyManager?.keyEventHandler = nil  // weak ref 解放時の孤立ハンドラ防止
             }
         }
-    }
-
-    private func keyCodeToChar(_ keyCode: CGKeyCode) -> String? {
-        // ホームポジション文字のキーコードマッピング
-        let map: [CGKeyCode: String] = [
-            0: "a", 11: "b", 8: "c", 2: "d", 14: "e",
-            3: "f", 5: "g", 4: "h", 34: "i", 38: "j",
-            40: "k", 37: "l", 46: "m", 45: "n", 31: "o",
-            35: "p", 12: "q", 15: "r", 1: "s", 17: "t",
-            32: "u", 9: "v", 13: "w", 7: "x", 16: "y", 6: "z"
-        ]
-        return map[keyCode]
     }
 }
