@@ -247,7 +247,6 @@ final class SearchModeController {
     /// selecting 状態に入る時に SearchView を更新する
     private func enterSelectingState(matched: [SearchElementInfo], labels: [String], input: String) {
         searchView?.updateForSelecting(matched: matched, labels: labels, input: input)
-        searchView?.unfocusSearchField()
     }
 
     /// searching 状態に戻る時に SearchView を更新する

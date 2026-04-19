@@ -203,20 +203,16 @@ final class SearchView: NSView {
     /// selecting 状態に入る時・ラベル入力更新時に呼ぶ
     func updateForSelecting(matched: [SearchElementInfo], labels: [String], input: String) {
         selectingData = SelectingData(matched: matched, labels: labels, input: input)
-        searchField.isEditable = false
-        selectingOverlay.isHidden = false
-        needsDisplay = true
+        display()
     }
 
     /// ESC で selecting → searching に戻る時に呼ぶ
     func returnToSearching(query: String, matched: [SearchElementInfo]) {
         selectingData = nil
-        searchField.isEditable = true
-        selectingOverlay.isHidden = true
         self.query = query
         self.matchedElements = matched
         focusSearchField()
-        needsDisplay = true
+        display()
     }
 
     // MARK: - 描画
