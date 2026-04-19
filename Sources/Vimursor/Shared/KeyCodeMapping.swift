@@ -4,6 +4,9 @@ import CoreGraphics
 /// HintModeController / SearchModeController から共有して使用する
 enum KeyCodeMapping {
 
+    /// ESC キーのキーコード
+    static let escapeKeyCode: CGKeyCode = 53
+
     /// キーコードと文字の全マッピング（US キーボードレイアウト準拠）
     static let allMappings: [CGKeyCode: String] = [
         0: "a", 11: "b", 8: "c", 2: "d", 14: "e",

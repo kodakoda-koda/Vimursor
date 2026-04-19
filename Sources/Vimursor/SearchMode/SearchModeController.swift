@@ -1,12 +1,5 @@
 import AppKit
 
-// MARK: - キーコード定数
-
-private enum SearchKeyCode {
-    /// ESC キー
-    static let escape: CGKeyCode = 53
-}
-
 // MARK: - 状態
 
 private enum SearchModeState {
@@ -129,7 +122,7 @@ final class SearchModeController {
     private func setSearchingKeyHandler() {
         hotkeyManager?.keyEventHandler = { [weak self] keyCode, _, _ in
             guard let self else { return false }
-            guard keyCode == SearchKeyCode.escape else { return false }
+            guard keyCode == KeyCodeMapping.escapeKeyCode else { return false }
             Task { @MainActor [weak self] in
                 self?.deactivate()
             }
@@ -139,10 +132,10 @@ final class SearchModeController {
 
     /// selecting 状態用: 全キーを消費して handleSelectingKey に渡すハンドラを設定する
     private func setSelectingKeyHandler() {
-        hotkeyManager?.keyEventHandler = { [weak self] keyCode, flags, char in
+        hotkeyManager?.keyEventHandler = { [weak self] keyCode, flags, _ in
             guard let self else { return false }
             Task { @MainActor [weak self] in
-                self?.handleSelectingKey(keyCode: keyCode, flags: flags, char: char)
+                self?.handleSelectingKey(keyCode: keyCode, flags: flags)
             }
             return true
         }
@@ -188,10 +181,10 @@ final class SearchModeController {
     // MARK: - handleSelectingKey
 
     /// selecting 状態でのキーイベント処理
-    private func handleSelectingKey(keyCode: CGKeyCode, flags: CGEventFlags, char: String) {
+    private func handleSelectingKey(keyCode: CGKeyCode, flags: CGEventFlags) {
         guard case .selecting(let elements, let query, let matched, let labels, let input) = state else { return }
 
-        if keyCode == SearchKeyCode.escape {
+        if keyCode == KeyCodeMapping.escapeKeyCode {
             // ESC → searching に戻る（クエリ維持）
             state = .searching(elements: elements, query: query, matched: matched)
             returnToSearchingState(query: query, matched: matched)

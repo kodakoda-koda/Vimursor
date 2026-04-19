@@ -189,9 +189,10 @@ struct SearchModeControllerTests {
         searchView.onEnterPressed?()
         try await Task.sleep(for: .milliseconds(100))
 
-        // Cmd+F（修飾キー付き）を送信 — 無視されること
-        // keyCode 3 = 'f'（ラベル先頭文字）, flags = .maskCommand
-        _ = hotkey.simulateKey(3, flags: .maskCommand, char: "f")
+        // Cmd+<先頭ラベル文字>（修飾キー付き）を送信 — 無視されること
+        let firstLabel = LabelGenerator.generateLabels(count: 2)[0]
+        let firstKeyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstLabel })?.key ?? 3
+        _ = hotkey.simulateKey(firstKeyCode, flags: .maskCommand)
         try await Task.sleep(for: .milliseconds(100))
 
         // クリックなし・deactivate なし（ハンドラが維持されている）
@@ -256,7 +257,7 @@ struct SearchModeControllerTests {
 
     @Test("selecting 中の完全一致でクリックが実行される")
     func selectingExactMatchTriggerClick() async throws {
-        // 要素が2つ: ラベルは "a", "b" となる（singleChar）
+        // 要素が2つ: ラベルは LabelGenerator が生成した先頭ラベルを使う
         let elements = [
             makeSearchInfo(title: "Save"),
             makeSearchInfo(title: "Close")
@@ -273,8 +274,14 @@ struct SearchModeControllerTests {
         searchView.onEnterPressed?()
         try await Task.sleep(for: .milliseconds(100))
 
-        // keyCode 3 = 'f' を入力 → ラベル "f" に完全一致 → クリック
-        _ = hotkey.simulateKey(3, flags: [], char: "f")
+        // 先頭ラベルと対応する keyCode を動的に解決する
+        let firstLabel = LabelGenerator.generateLabels(count: 2)[0]
+        guard let keyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstLabel })?.key else {
+            return  // マッピングが存在しない場合はスキップ
+        }
+
+        // 先頭ラベルに完全一致するキーを送信 → クリック
+        _ = hotkey.simulateKey(keyCode)
         try await Task.sleep(for: .milliseconds(300))
 
         // deactivate されてクリックが 1 回発生

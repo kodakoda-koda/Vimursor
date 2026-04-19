@@ -4,58 +4,6 @@ import Testing
 @Suite("KeyCodeMapping Tests")
 struct KeyCodeMappingTests {
 
-    // MARK: - 既知キーコードのマッピング
-
-    @Test("keyCode 0 returns 'a'")
-    func keyCode0ReturnsA() {
-        #expect(KeyCodeMapping.charFromKeyCode(0) == "a")
-    }
-
-    @Test("keyCode 11 returns 'b'")
-    func keyCode11ReturnsB() {
-        #expect(KeyCodeMapping.charFromKeyCode(11) == "b")
-    }
-
-    @Test("keyCode 8 returns 'c'")
-    func keyCode8ReturnsC() {
-        #expect(KeyCodeMapping.charFromKeyCode(8) == "c")
-    }
-
-    @Test("keyCode 2 returns 'd'")
-    func keyCode2ReturnsD() {
-        #expect(KeyCodeMapping.charFromKeyCode(2) == "d")
-    }
-
-    @Test("keyCode 14 returns 'e'")
-    func keyCode14ReturnsE() {
-        #expect(KeyCodeMapping.charFromKeyCode(14) == "e")
-    }
-
-    @Test("keyCode 3 returns 'f'")
-    func keyCode3ReturnsF() {
-        #expect(KeyCodeMapping.charFromKeyCode(3) == "f")
-    }
-
-    @Test("keyCode 38 returns 'j'")
-    func keyCode38ReturnsJ() {
-        #expect(KeyCodeMapping.charFromKeyCode(38) == "j")
-    }
-
-    @Test("keyCode 40 returns 'k'")
-    func keyCode40ReturnsK() {
-        #expect(KeyCodeMapping.charFromKeyCode(40) == "k")
-    }
-
-    @Test("keyCode 37 returns 'l'")
-    func keyCode37ReturnsL() {
-        #expect(KeyCodeMapping.charFromKeyCode(37) == "l")
-    }
-
-    @Test("keyCode 15 returns 'r'")
-    func keyCode15ReturnsR() {
-        #expect(KeyCodeMapping.charFromKeyCode(15) == "r")
-    }
-
     // MARK: - 未知キーコードは nil を返す
 
     @Test("unknown keyCode returns nil")

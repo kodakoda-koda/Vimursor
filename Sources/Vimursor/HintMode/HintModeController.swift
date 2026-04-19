@@ -7,10 +7,6 @@ private enum HintModeState {
     case restarting // クリック後〜再起動待ち。ESC のみ受付
 }
 
-private enum HintKeyCode {
-    static let esc: CGKeyCode = 53
-}
-
 // CGEventTapスレッドからアクティブ状態だけを読めるよう分離
 // すべてのUI操作はメインスレッドで実行する
 @MainActor
@@ -102,14 +98,14 @@ final class HintModeController {
 
     private func handleKey(keyCode: CGKeyCode, flags: CGEventFlags) {
         if case .restarting = state {
-            if keyCode == HintKeyCode.esc { deactivate() }  // ESC のみ受付
+            if keyCode == KeyCodeMapping.escapeKeyCode { deactivate() }  // ESC のみ受付
             return  // 他のキーは消費して無視
         }
 
         guard case .active(let hints, let input) = state else { return }
 
         // ESC
-        if keyCode == HintKeyCode.esc {
+        if keyCode == KeyCodeMapping.escapeKeyCode {
             deactivate()
             return
         }
@@ -187,6 +183,4 @@ final class HintModeController {
             }
         }
     }
-
-
 }
