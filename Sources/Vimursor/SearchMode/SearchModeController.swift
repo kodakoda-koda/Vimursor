@@ -199,6 +199,9 @@ final class SearchModeController {
             return
         }
 
+        // 修飾キー付きは無視（Cmd+Tab 等の誤発火防止）
+        guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
+
         // ラベル文字入力: KeyCodeMapping 経由でアルファベット文字を取得
         guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 

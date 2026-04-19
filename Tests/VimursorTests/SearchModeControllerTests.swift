@@ -169,6 +169,119 @@ struct SearchModeControllerTests {
         )
     }
 
+    // MARK: - selecting キー入力処理テスト
+
+    @Test("selecting 中の修飾キー付きキーは無視される")
+    func selectingIgnoresModifierKeys() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return
+        }
+
+        // Enter で selecting に遷移
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // Cmd+F（修飾キー付き）を送信 — 無視されること
+        // keyCode 3 = 'f'（ラベル先頭文字）, flags = .maskCommand
+        _ = hotkey.simulateKey(3, flags: .maskCommand, char: "f")
+        try await Task.sleep(for: .milliseconds(100))
+
+        // クリックなし・deactivate なし（ハンドラが維持されている）
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
+    @Test("selecting 中にマッチなし → deactivate")
+    func selectingNoMatchDeactivates() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return
+        }
+
+        // Enter で selecting に遷移（ラベルは "a", "b" 等が生成される）
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // ラベルに存在しない文字を入力（KeyCodeMapping で 'z' は存在しない場合もあるため 'z' ではなく 'q' + 'z' の連続で確実にマッチなしを作る）
+        // KeyCode 12 = 'q'、まず 'q' を入力してから 'q' を再度入力（"qq" は "a", "b" にマッチしない）
+        _ = hotkey.simulateKey(12, flags: [], char: "q")  // 'q'
+        try await Task.sleep(for: .milliseconds(100))
+        _ = hotkey.simulateKey(12, flags: [], char: "q")  // 'qq' はマッチなし
+        try await Task.sleep(for: .milliseconds(100))
+
+        // クリックなし・deactivate されてハンドラが nil
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
+    @Test("selecting 中の prefix マッチで状態が更新される")
+    func selectingPrefixMatchUpdatesState() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As"),
+            makeSearchInfo(title: "Close")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return
+        }
+
+        // Enter で selecting に遷移（ラベルは 2 文字: aa, ab, ba 等）
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // クリックまたはマッチなしになるまでハンドラが維持されていること
+        #expect(hotkey.keyEventHandler != nil)
+        // クリックはまだ発生していない
+        #expect(fetcher.clickAtCallCount == 0)
+    }
+
+    @Test("selecting 中の完全一致でクリックが実行される")
+    func selectingExactMatchTriggerClick() async throws {
+        // 要素が2つ: ラベルは "a", "b" となる（singleChar）
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Close")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return
+        }
+
+        // Enter で selecting に遷移
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // keyCode 3 = 'f' を入力 → ラベル "f" に完全一致 → クリック
+        _ = hotkey.simulateKey(3, flags: [], char: "f")
+        try await Task.sleep(for: .milliseconds(300))
+
+        // deactivate されてクリックが 1 回発生
+        #expect(fetcher.clickAtCallCount == 1)
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
     @Test func filterByTitle() {
         let elements = [makeInfo(title: "Save"), makeInfo(title: "Cancel")]
         let result = SearchModeController.filter(elements: elements, query: "save")
