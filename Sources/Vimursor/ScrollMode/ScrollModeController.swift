@@ -50,10 +50,15 @@ final class ScrollModeController {
     private var state: ScrollModeState = .inactive
     private var scrollAreaView: ScrollAreaView?
     private var indicatorView: ScrollIndicatorView?
-    private weak var overlayWindow: OverlayWindow?
-    private weak var hotkeyManager: HotkeyManager?
+    private weak var overlayWindow: (any OverlayProviding)?
+    private weak var hotkeyManager: (any KeyEventHandling)?
+    private let elementFetcher: any ElementFetching
 
-    func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
+    init(elementFetcher: any ElementFetching = AXManager()) {
+        self.elementFetcher = elementFetcher
+    }
+
+    func activate(overlayWindow: any OverlayProviding, hotkeyManager: any KeyEventHandling) {
         guard case .inactive = state else { return }
         state = .fetching
         self.overlayWindow = overlayWindow
@@ -99,10 +104,11 @@ final class ScrollModeController {
             deactivate()
             return
         }
-        let appElement = AXElement(ref: AXUIElementCreateApplication(focusedApp.processIdentifier))
-        DispatchQueue.global(qos: .userInitiated).async { [weak self] in
-            let areas = ScrollTarget.enumerateScrollableElements(root: appElement.ref)
-            DispatchQueue.main.async { self?.startScrollMode(areas: areas) }
+        let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
+        elementFetcher.fetchScrollableElements(in: appElement) { [weak self] areas in
+            Task { @MainActor [weak self] in
+                self?.startScrollMode(areas: areas)
+            }
         }
     }
 
