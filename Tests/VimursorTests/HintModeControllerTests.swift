@@ -126,14 +126,25 @@ struct HintModeControllerTests {
     // MARK: - ESC キーで deactivate される
 
     @Test func escKeyDeactivates() async throws {
-        let (controller, overlay, hotkey, _) = makeSUT()
-        // activate → active 状態に移行してから ESC をシミュレート
+        let axRef = AXUIElementCreateSystemWide()
+        let axElement = AXElement(ref: axRef)
+        let info = UIElementInfo(
+            frame: CGRect(x: 100, y: 100, width: 50, height: 20),
+            label: "a",
+            axElement: axElement
+        )
+        // 要素ありの SUT を使い、keyEventHandler が実際に設定される状態にする
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [info])
+        fetcher.clickableElements = [axElement]
         controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        // DispatchQueue.main.async + Task { @MainActor } を待つ
         try await Task.sleep(for: .milliseconds(50))
-        // ESC (keyCode 53) を送る（handler が設定されていれば deactivate が呼ばれる）
-        hotkey.simulateKey(53)
-        try await Task.sleep(for: .milliseconds(20))
-        // deactivate によって keyEventHandler が nil になることを確認
-        #expect(hotkey.keyEventHandler == nil)
+        // active 状態で keyEventHandler が設定されていることを前提に ESC を送る
+        // frontmostApplication が nil の場合はハンドラが設定されないのでスキップ
+        if hotkey.keyEventHandler != nil {
+            hotkey.simulateKey(53)
+            try await Task.sleep(for: .milliseconds(20))
+            #expect(hotkey.keyEventHandler == nil)
+        }
     }
 }

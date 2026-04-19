@@ -23,7 +23,7 @@ final class MockElementFetching: ElementFetching, @unchecked Sendable {
         }
     }
 
-    func buildUIElementInfos(elements: [AXElement], labels: [String]) -> [UIElementInfo] {
+    @MainActor func buildUIElementInfos(elements: [AXElement], labels: [String]) -> [UIElementInfo] {
         return uiElementInfos
     }
 
