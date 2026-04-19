@@ -33,19 +33,21 @@ Note: Attribution disabled globally via ~/.claude/settings.json.
 5. **Commit** — ユーザーの指示で実行
    - ユーザーが明示的に指示するまで `git commit` しない
    - Conventional Commits 形式
-   - Task の実装が完了したコミットでは `Closes #TaskN` を含める
+   - `Closes #XX` はコミットメッセージには書かない（squash merge で消えるため）
 
 6. **Task Close** — 実装完了時に Issue を更新
    - Close 前に該当 Issue へコメントで実装内容（設計判断・変更ファイル・注意点等）を記録する
-   - コミットの `Closes #TaskN` で自動クローズ、またはコメント後に手動クローズ
+   - Issue のクローズは PR body の `Closes` キーワードで自動化する（後述）
 
 7. **Pull Request** — Epic 単位で PR を作成
    - ユーザーが明示的に指示するまで実行しない
    - PR body に `Epic: #N` で親 Epic を参照
+   - PR body に `Closes #51, Closes #52, ...` で対象タスク Issue を列挙する（自動クローズ用）
+   - Epic Issue 自体も `Closes #50` のように含める
    - 全コミット履歴（`git diff [base-branch]...HEAD`）を分析して PR サマリーを作成
    - テストプランを含める
    - マージ先は `develop`（`release/**` → `main` の場合を除く）
-   - Epic は PR マージ時にクローズする
+   - マージは常に **squash merge** で行う（ユーザーが手動で実行）
 
 ## Branch Naming
 
