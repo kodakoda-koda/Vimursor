@@ -119,3 +119,6 @@ final class HotkeyManager: @unchecked Sendable {
         return String(utf16CodeUnits: Array(chars.prefix(actualLength)), count: actualLength)
     }
 }
+
+// MARK: - KeyEventHandling
+extension HotkeyManager: KeyEventHandling {}

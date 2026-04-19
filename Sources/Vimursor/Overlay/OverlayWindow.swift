@@ -55,3 +55,6 @@ final class OverlayWindow: NSPanel {
         orderOut(nil)
     }
 }
+
+// MARK: - OverlayProviding
+extension OverlayWindow: OverlayProviding {}
