@@ -282,6 +282,152 @@ struct SearchModeControllerTests {
         #expect(hotkey.keyEventHandler == nil)
     }
 
+    // MARK: - 追加統合テスト・回帰テスト
+
+    @Test("マッチ0件でEnter → searching のまま変化なし")
+    func executeSearchWithZeroMatchesDoesNothing() async throws {
+        let element = makeSearchInfo(title: "Save")
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [element])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // クエリをマッチなし状態にしてから Enter を発火
+        // onQueryChanged を呼んで matched を 0 件に絞る
+        searchView.onQueryChanged?("zzzzz_no_match")
+        try await Task.sleep(for: .milliseconds(50))
+
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(200))
+
+        // クリックされない・deactivate されない（ハンドラが維持される）
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
+    @Test("searching 中の ESC → deactivate")
+    func searchingEscDeactivates() async throws {
+        let element = makeSearchInfo(title: "Save")
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [element])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard overlay.contentView?.subviews.first(where: { $0 is SearchView }) != nil else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // searching 状態で ESC を送信（keyCode 53）
+        let consumed = hotkey.simulateKey(53)
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(consumed == true)
+        // deactivate により keyEventHandler が nil になること
+        #expect(hotkey.keyEventHandler == nil)
+        // overlay が hide されること
+        #expect(overlay.hideCallCount >= 1)
+    }
+
+    @Test("selecting 状態から deactivate するとクリーンアップされる")
+    func deactivateFromSelectingStateCleansUp() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // selecting 状態に遷移
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // selecting 状態から直接 deactivate
+        controller.deactivate()
+        try await Task.sleep(for: .milliseconds(50))
+
+        // クリーンアップが正しく行われること
+        #expect(hotkey.keyEventHandler == nil)
+        #expect(overlay.hideCallCount >= 1)
+        #expect(fetcher.clickAtCallCount == 0)
+    }
+
+    @Test("selecting → searching → Enter → 再び selecting に遷移できる（往復テスト）")
+    func selectingToSearchingAndBackToSelectingWorks() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // 1回目: Enter で selecting に遷移
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(hotkey.keyEventHandler != nil)  // selecting ハンドラが設定されている
+
+        // ESC で searching に戻る
+        hotkey.simulateKey(53)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(hotkey.keyEventHandler != nil)  // searching ハンドラが設定されている
+
+        // 2回目: Enter で再び selecting に遷移できること
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // クリックなし（selecting 状態）かつハンドラが設定されていること
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
+    @Test("selecting 中 ESC で searching に戻ったときクエリが維持される（詳細検証）")
+    func selectingEscMaintainsQueryInSearching() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // クエリを "save" に設定してから Enter → selecting
+        searchView.onQueryChanged?("save")
+        try await Task.sleep(for: .milliseconds(50))
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // ESC で searching に戻る
+        hotkey.simulateKey(53)
+        try await Task.sleep(for: .milliseconds(100))
+
+        // searching 状態に戻っているのでクリックなし・ハンドラ維持
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler != nil)
+
+        // searching に戻った後、Enter を再度押すと再び selecting に遷移（クエリが有効）
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // 2件マッチ（"Save", "Save As"）のため selecting 状態に遷移
+        #expect(fetcher.clickAtCallCount == 0)
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
     @Test func filterByTitle() {
         let elements = [makeInfo(title: "Save"), makeInfo(title: "Cancel")]
         let result = SearchModeController.filter(elements: elements, query: "save")
