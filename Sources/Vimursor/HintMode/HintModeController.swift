@@ -117,7 +117,7 @@ final class HintModeController {
         // 修飾キー付きは無視（Cmd+Tab等）
         guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
 
-        guard let char = keyCodeToChar(keyCode) else { return }
+        guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 
         let newInput = input + char
         let matches = hints.filter { $0.label.hasPrefix(newInput) }
@@ -188,15 +188,5 @@ final class HintModeController {
         }
     }
 
-    private func keyCodeToChar(_ keyCode: CGKeyCode) -> String? {
-        // ホームポジション文字のキーコードマッピング
-        let map: [CGKeyCode: String] = [
-            0: "a", 11: "b", 8: "c", 2: "d", 14: "e",
-            3: "f", 5: "g", 4: "h", 34: "i", 38: "j",
-            40: "k", 37: "l", 46: "m", 45: "n", 31: "o",
-            35: "p", 12: "q", 15: "r", 1: "s", 17: "t",
-            32: "u", 9: "v", 13: "w", 7: "x", 16: "y", 6: "z"
-        ]
-        return map[keyCode]
-    }
+
 }
