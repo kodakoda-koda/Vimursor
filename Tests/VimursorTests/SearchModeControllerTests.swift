@@ -143,7 +143,7 @@ struct SearchModeControllerTests {
         try await Task.sleep(for: .milliseconds(100))
 
         // ESC で searching に戻る（ESC keyCode = 53）
-        let consumed = hotkey.simulateKey(53)
+        let consumed = hotkey.simulateKey(KeyCodeMapping.escapeKeyCode)
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(consumed == true)
@@ -191,7 +191,10 @@ struct SearchModeControllerTests {
 
         // Cmd+<先頭ラベル文字>（修飾キー付き）を送信 — 無視されること
         let firstLabel = LabelGenerator.generateLabels(count: 2)[0]
-        let firstKeyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstLabel })?.key ?? 3
+        guard let firstKeyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstLabel })?.key else {
+            Issue.record("KeyCodeMapping に firstLabel '\(firstLabel)' のマッピングが存在しない")
+            return
+        }
         _ = hotkey.simulateKey(firstKeyCode, flags: .maskCommand)
         try await Task.sleep(for: .milliseconds(100))
 
@@ -230,28 +233,39 @@ struct SearchModeControllerTests {
         #expect(hotkey.keyEventHandler == nil)
     }
 
-    @Test("selecting 中の prefix マッチで状態が更新される")
+    @Test("selecting 中の prefix マッチ入力でハンドラが維持される（2文字ラベル）")
     func selectingPrefixMatchUpdatesState() async throws {
-        let elements = [
-            makeSearchInfo(title: "Save"),
-            makeSearchInfo(title: "Save As"),
-            makeSearchInfo(title: "Close")
-        ]
+        // LabelGenerator は 17 件以上で 2 文字ラベルを生成する（chars は 16 文字）
+        let elements = (0..<17).map { makeSearchInfo(title: "Item \($0)") }
         let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
         controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         try await Task.sleep(for: .milliseconds(100))
 
         guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
-            return
+            return  // UI 環境なし（CI等）では SearchView が生成されない
         }
 
-        // Enter で selecting に遷移（ラベルは 2 文字: aa, ab, ba 等）
+        // Enter で selecting に遷移（ラベルは "ff", "fj", "fr", ... の 2 文字）
         searchView.onEnterPressed?()
         try await Task.sleep(for: .milliseconds(100))
 
-        // クリックまたはマッチなしになるまでハンドラが維持されていること
+        // selecting 状態なのでクリックなし・ハンドラが設定されている
         #expect(hotkey.keyEventHandler != nil)
-        // クリックはまだ発生していない
+        #expect(fetcher.clickAtCallCount == 0)
+
+        // 先頭ラベルの 1 文字目を入力（prefix マッチ状態のまま selecting が継続する）
+        let firstLabel = LabelGenerator.generateLabels(count: 17)[0]
+        // firstLabel の 1 文字目 (例: "f") を送信 → prefix マッチが複数残る → deactivate されない
+        let firstChar = String(firstLabel.prefix(1))
+        guard let prefixKeyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstChar })?.key else {
+            Issue.record("KeyCodeMapping に '\(firstChar)' のマッピングが存在しない")
+            return
+        }
+        _ = hotkey.simulateKey(prefixKeyCode)
+        try await Task.sleep(for: .milliseconds(100))
+
+        // prefix 入力後もハンドラが維持され、クリックが発生していないこと
+        #expect(hotkey.keyEventHandler != nil)
         #expect(fetcher.clickAtCallCount == 0)
     }
 
@@ -277,7 +291,8 @@ struct SearchModeControllerTests {
         // 先頭ラベルと対応する keyCode を動的に解決する
         let firstLabel = LabelGenerator.generateLabels(count: 2)[0]
         guard let keyCode = KeyCodeMapping.allMappings.first(where: { $0.value == firstLabel })?.key else {
-            return  // マッピングが存在しない場合はスキップ
+            Issue.record("KeyCodeMapping に firstLabel '\(firstLabel)' のマッピングが存在しない")
+            return
         }
 
         // 先頭ラベルに完全一致するキーを送信 → クリック
@@ -327,7 +342,7 @@ struct SearchModeControllerTests {
         }
 
         // searching 状態で ESC を送信（keyCode 53）
-        let consumed = hotkey.simulateKey(53)
+        let consumed = hotkey.simulateKey(KeyCodeMapping.escapeKeyCode)
         try await Task.sleep(for: .milliseconds(100))
 
         #expect(consumed == true)
@@ -385,7 +400,7 @@ struct SearchModeControllerTests {
         #expect(hotkey.keyEventHandler != nil)  // selecting ハンドラが設定されている
 
         // ESC で searching に戻る
-        hotkey.simulateKey(53)
+        hotkey.simulateKey(KeyCodeMapping.escapeKeyCode)
         try await Task.sleep(for: .milliseconds(100))
         #expect(hotkey.keyEventHandler != nil)  // searching ハンドラが設定されている
 
@@ -419,7 +434,7 @@ struct SearchModeControllerTests {
         try await Task.sleep(for: .milliseconds(100))
 
         // ESC で searching に戻る
-        hotkey.simulateKey(53)
+        hotkey.simulateKey(KeyCodeMapping.escapeKeyCode)
         try await Task.sleep(for: .milliseconds(100))
 
         // searching 状態に戻っているのでクリックなし・ハンドラ維持

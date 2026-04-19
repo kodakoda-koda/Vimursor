@@ -71,6 +71,9 @@ final class SearchView: NSView {
     // マッチ件数表示ラベル
     private let countLabel: NSTextField
 
+    // selecting 状態を視覚的に示すオーバーレイ（blurContainer 上に重ねる）
+    private let selectingOverlay: NSView
+
     // コントローラからセットされるコールバック
     var onQueryChanged: QueryChangedHandler?
     // Enter 確定時のコールバック（IME 変換確定との区別は NSTextField デリゲートが担う）
@@ -80,10 +83,12 @@ final class SearchView: NSView {
         self.blurContainer = NSVisualEffectView()
         self.searchField = SearchTextField()
         self.countLabel = SearchView.makeCountLabel()
+        self.selectingOverlay = NSView()
         super.init(frame: frame)
         setupBlurContainer()
         setupTextField()
         setupCountLabel()
+        setupSelectingOverlay()
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -140,6 +145,19 @@ final class SearchView: NSView {
         blurContainer.addSubview(countLabel)
     }
 
+    private func setupSelectingOverlay() {
+        // blurContainer 全体を覆うオーバーレイ（selecting 状態時に表示）
+        selectingOverlay.frame = CGRect(origin: .zero, size: CGSize(width: 0, height: SearchBarLayout.height))
+        selectingOverlay.autoresizingMask = [.width, .height]
+        selectingOverlay.wantsLayer = true
+        selectingOverlay.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.15).cgColor
+        selectingOverlay.layer?.cornerRadius = SearchBarLayout.cornerRadius
+        selectingOverlay.isHidden = true
+        // ユーザー操作を透過させる（サブビューのイベントに影響しない）
+        selectingOverlay.frame = blurContainer.bounds
+        blurContainer.addSubview(selectingOverlay)
+    }
+
     // MARK: - フローティングバーの幅（現在のboundsから算出）
 
     private var barWidth: CGFloat {
@@ -181,10 +199,17 @@ final class SearchView: NSView {
         window?.makeFirstResponder(searchField)
     }
 
+    func unfocusSearchField() {
+        window?.makeFirstResponder(nil)
+    }
+
     /// selecting 状態に入る時・ラベル入力更新時に呼ぶ
     func updateForSelecting(matched: [SearchElementInfo], labels: [String], input: String) {
         selectingData = SelectingData(matched: matched, labels: labels, input: input)
-        display()
+        searchField.isEditable = false
+        selectingOverlay.isHidden = false
+        unfocusSearchField()
+        needsDisplay = true
     }
 
     /// ESC で selecting → searching に戻る時に呼ぶ
@@ -192,8 +217,10 @@ final class SearchView: NSView {
         selectingData = nil
         self.query = query
         self.matchedElements = matched
+        searchField.isEditable = true
+        selectingOverlay.isHidden = true
         focusSearchField()
-        display()
+        needsDisplay = true
     }
 
     // MARK: - 描画
@@ -207,7 +234,14 @@ final class SearchView: NSView {
     }
 
     private func drawHighlights() {
-        for info in matchedElements {
+        // selecting 状態では selectingData.matched からハイライトを描画する
+        let elements: [SearchElementInfo]
+        if let data = selectingData {
+            elements = data.matched
+        } else {
+            elements = matchedElements
+        }
+        for info in elements {
             let path = NSBezierPath(roundedRect: info.frame.insetBy(dx: -2, dy: -2), xRadius: 4, yRadius: 4)
             NSColor.systemGreen.withAlphaComponent(0.85).setStroke()
             path.lineWidth = 2.5
