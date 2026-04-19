@@ -32,11 +32,11 @@ MANDATORY workflow:
 
 ## Troubleshooting Test Failures
 
-1. Use **tdd-guide** agent
+1. Use **developer** agent（TDD ガイド内蔵）
 2. Check test isolation（XCTestCase は setUp/tearDown で状態をリセット）
 3. Verify mocks are correct
 4. Fix implementation, not tests (unless tests are wrong)
 
 ## Agent Support
 
-- **tdd-guide** - Use PROACTIVELY for new features, enforces write-tests-first
+- **developer** - Use PROACTIVELY for new features, enforces write-tests-first (TDD built-in)
