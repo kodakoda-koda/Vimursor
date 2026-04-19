@@ -12,34 +12,58 @@ Types: feat, fix, refactor, docs, test, chore, perf, ci
 
 Note: Attribution disabled globally via ~/.claude/settings.json.
 
-## Pull Request Workflow
-
-When creating PRs:
-1. Analyze full commit history (not just latest commit)
-2. Use `git diff [base-branch]...HEAD` to see all changes
-3. Draft comprehensive PR summary
-4. Include test plan with TODOs
-5. Push with `-u` flag if new branch
-
 ## Feature Implementation Workflow
 
-1. **Plan First**
-   - Use **planner** agent to create implementation plan
-   - Identify dependencies and risks
-   - Break down into phases
+1. **Discussion** — 要件・制約を議論し合意する
+   - 不明な点があれば質問してから着手する
+   - 非自明な設計判断は Review Mode で提案→承認を経る
 
-2. **TDD Approach**
-   - Use **tdd-guide** agent
-   - Write tests first (RED)
-   - Implement to pass tests (GREEN)
-   - Refactor (IMPROVE)
-   - Verify 80%+ coverage
+2. **Plan** — **planner** エージェントで計画を作成
+   - GitHub Issue として登録（Epic: `[Epic N]`、Task: `[N-M]`）
+   - 依存関係・リスクを特定し、Phase に分解する
 
-3. **Code Review**
-   - Use **code-reviewer** agent immediately after writing code
-   - Address CRITICAL and HIGH issues
-   - Fix MEDIUM issues when possible
+3. **Develop** — **developer** エージェントで TDD 実装
+   - テストファースト（RED → GREEN → REFACTOR）
+   - カバレッジ 80%+ を維持
 
-4. **Commit & Push**
-   - Detailed commit messages
-   - Follow conventional commits format
+4. **Code Review** — **code-reviewer** エージェントでレビュー
+   - CRITICAL / HIGH の指摘は修正必須
+   - MEDIUM は可能な限り対応
+
+5. **Commit** — ユーザーの指示で実行
+   - ユーザーが明示的に指示するまで `git commit` しない
+   - Conventional Commits 形式
+   - Task の実装が完了したコミットでは `Closes #TaskN` を含める
+
+6. **Task Close** — 実装完了時に Issue を更新
+   - Close 前に該当 Issue へコメントで実装内容（設計判断・変更ファイル・注意点等）を記録する
+   - コミットの `Closes #TaskN` で自動クローズ、またはコメント後に手動クローズ
+
+7. **Pull Request** — Epic 単位で PR を作成
+   - ユーザーが明示的に指示するまで実行しない
+   - PR body に `Epic: #N` で親 Epic を参照
+   - 全コミット履歴（`git diff [base-branch]...HEAD`）を分析して PR サマリーを作成
+   - テストプランを含める
+   - マージ先は `develop`（`release/**` → `main` の場合を除く）
+   - Epic は PR マージ時にクローズする
+
+## Branch Naming
+
+```
+feature/epic<N>-<short-description>   # 機能開発（例: feature/epic6-appearance）
+fix/<short-description>               # バグ修正（例: fix/hint-label-overlap）
+docs/<short-description>              # ドキュメント
+release/v<version>                    # リリース（→ main）
+```
+
+ブランチは `develop` から切る。詳細は `CONTRIBUTING.md` を参照。
+
+## Issue Management
+
+実装計画・タスクは GitHub Issue で管理する。
+
+- **Epic**（機能グループ）: `[Epic N]` 形式のタイトル、`epic` ラベル
+- **Task**（個別実装）: `[N-M]` 形式のタイトル、`task` ラベル
+- **Memo**（技術的知見・調査記録等）: `memo` ラベル
+- Issue テンプレートは `.github/ISSUE_TEMPLATE/` を使用
+- **方針の記録**: タスクの方針が決まった時・変更した時は、該当 Issue のコメントに随時記載する

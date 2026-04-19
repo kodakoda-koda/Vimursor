@@ -15,22 +15,23 @@ private enum HintKeyCode {
 // すべてのUI操作はメインスレッドで実行する
 @MainActor
 final class HintModeController {
-    private let axManager = AXManager()
+    private let elementFetcher: any ElementFetching
     private var state: HintModeState = .inactive
     private var hintView: HintView?
-    private weak var overlayWindow: OverlayWindow?
-    private weak var hotkeyManager: HotkeyManager?
+    private weak var overlayWindow: (any OverlayProviding)?
+    private weak var hotkeyManager: (any KeyEventHandling)?
     private let settings: HintModeSettings
 
     static let reactivationDelay: TimeInterval = 0.3
     static let clickDelay: TimeInterval = 0.05
     private(set) var reactivationTask: Task<Void, Never>?
 
-    init(settings: HintModeSettings) {
+    init(settings: HintModeSettings, elementFetcher: any ElementFetching = AXManager()) {
         self.settings = settings
+        self.elementFetcher = elementFetcher
     }
 
-    func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
+    func activate(overlayWindow: any OverlayProviding, hotkeyManager: any KeyEventHandling) {
         guard case .inactive = state else { return }  // fetching / active 中はスキップ
         state = .fetching                              // 同期的に状態変更（二重起動防止）
 
@@ -43,17 +44,23 @@ final class HintModeController {
         }
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
-        axManager.fetchClickableElements(in: appElement) { [weak self] elements in
+        elementFetcher.fetchClickableElements(in: appElement) { [weak self] elements in
             Task { @MainActor [weak self] in
-                self?.startHintMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+                guard let self,
+                      let overlay = self.overlayWindow,
+                      let hotkey = self.hotkeyManager else {
+                    self?.state = .inactive
+                    return
+                }
+                self.startHintMode(elements: elements, overlayWindow: overlay, hotkeyManager: hotkey)
             }
         }
     }
 
     private func startHintMode(
         elements: [AXElement],
-        overlayWindow: OverlayWindow,
-        hotkeyManager: HotkeyManager
+        overlayWindow: any OverlayProviding,
+        hotkeyManager: any KeyEventHandling
     ) {
         guard !elements.isEmpty else {
             state = .inactive  // 要素がなければ inactive に戻す
@@ -61,7 +68,7 @@ final class HintModeController {
         }
 
         let labels = LabelGenerator.generateLabels(count: elements.count)
-        let hints = axManager.buildUIElementInfos(elements: elements, labels: labels)
+        let hints = elementFetcher.buildUIElementInfos(elements: elements, labels: labels)
 
         state = .active(hints: hints, input: "")
 
@@ -132,7 +139,7 @@ final class HintModeController {
                     }
                     guard let self else { return }
                     guard case .restarting = self.state else { return }  // ESCでdeactivateされていたら中断
-                    self.axManager.clickAt(frame: frame)
+                    self.elementFetcher.clickAt(frame: frame)
                     self.scheduleReactivation()
                 }
             } else {
@@ -144,7 +151,7 @@ final class HintModeController {
                     } catch is CancellationError {
                         return
                     }
-                    self?.axManager.clickAt(frame: frame)
+                    self?.elementFetcher.clickAt(frame: frame)
                 }
             }
             return

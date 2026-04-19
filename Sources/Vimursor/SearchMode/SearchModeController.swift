@@ -2,43 +2,61 @@ import AppKit
 
 private enum SearchModeState {
     case inactive
+    case fetching  // 要素取得中（二重起動防止）
     case active(elements: [SearchElementInfo], query: String, matched: [SearchElementInfo])
 }
 
 @MainActor
 final class SearchModeController {
-    private let axManager = AXManager()
+    private let elementFetcher: any ElementFetching
     private var state: SearchModeState = .inactive
-    private var isActive: Bool = false
     private var searchView: SearchView?
-    private weak var overlayWindow: OverlayWindow?
-    private weak var hotkeyManager: HotkeyManager?
+    private weak var overlayWindow: (any OverlayProviding)?
+    private weak var hotkeyManager: (any KeyEventHandling)?
     private var previousApp: NSRunningApplication?
 
-    func activate(overlayWindow: OverlayWindow, hotkeyManager: HotkeyManager) {
-        guard !isActive else { return }
+    init(elementFetcher: any ElementFetching = AXManager()) {
+        self.elementFetcher = elementFetcher
+    }
+
+    func activate(overlayWindow: any OverlayProviding, hotkeyManager: any KeyEventHandling) {
+        guard case .inactive = state else { return }
+        state = .fetching  // 同期的に状態変更（二重起動防止）
+
         self.overlayWindow = overlayWindow
         self.hotkeyManager = hotkeyManager
 
-        guard let focusedApp = NSWorkspace.shared.frontmostApplication else { return }
+        guard let focusedApp = NSWorkspace.shared.frontmostApplication else {
+            state = .inactive
+            return
+        }
         self.previousApp = focusedApp
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
-        axManager.fetchSearchableElements(in: appElement) { [weak self] elements in
-            guard !elements.isEmpty else { return }
+        elementFetcher.fetchSearchableElements(in: appElement) { [weak self] elements in
             Task { @MainActor [weak self] in
-                self?.startSearchMode(elements: elements, overlayWindow: overlayWindow, hotkeyManager: hotkeyManager)
+                guard let self,
+                      let overlay = self.overlayWindow,
+                      let hotkey = self.hotkeyManager else {
+                    self?.state = .inactive
+                    return
+                }
+                self.startSearchMode(elements: elements, overlayWindow: overlay, hotkeyManager: hotkey)
             }
         }
     }
 
     private func startSearchMode(
         elements: [SearchElementInfo],
-        overlayWindow: OverlayWindow,
-        hotkeyManager: HotkeyManager
+        overlayWindow: any OverlayProviding,
+        hotkeyManager: any KeyEventHandling
     ) {
+        guard case .fetching = state else { return }
+        guard !elements.isEmpty else {
+            state = .inactive  // 要素がなければ inactive に戻す
+            return
+        }
         state = .active(elements: elements, query: "", matched: elements)
-        isActive = true
 
         let view = SearchView(frame: overlayWindow.contentView?.bounds ?? .zero)
         view.autoresizingMask = [.width, .height]
@@ -79,7 +97,6 @@ final class SearchModeController {
     }
 
     func deactivate() {
-        isActive = false
         state = .inactive
         searchView?.removeFromSuperview()
         searchView = nil
@@ -103,8 +120,13 @@ final class SearchModeController {
         guard case .active(_, _, let matched) = state, let first = matched.first else { return }
         let frame = first.frame
         deactivate()
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-            self?.axManager.clickAt(frame: frame)
+        Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(0.05))
+            } catch is CancellationError {
+                return
+            }
+            self?.elementFetcher.clickAt(frame: frame)
         }
     }
 

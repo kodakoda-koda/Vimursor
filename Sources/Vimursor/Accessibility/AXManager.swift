@@ -59,7 +59,6 @@ final class AXManager: @unchecked Sendable {
         return infos
     }
 
-    @MainActor
     func fetchSearchableElements(
         in app: AXUIElement,
         completion: @escaping @Sendable ([SearchElementInfo]) -> Void
@@ -89,7 +88,6 @@ final class AXManager: @unchecked Sendable {
         }
     }
 
-    @MainActor
     func clickAt(frame: CGRect) {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         let point = AXManager.centerScreenPoint(from: frame, screenHeight: screenHeight)
@@ -128,6 +126,19 @@ final class AXManager: @unchecked Sendable {
         )
     }
 
+    func fetchScrollableElements(
+        in app: AXUIElement,
+        completion: @escaping @Sendable ([ScrollAreaInfo]) -> Void
+    ) {
+        let appElement = AXElement(ref: app)
+        DispatchQueue.global(qos: .userInitiated).async {
+            let areas = ScrollTarget.enumerateScrollableElements(root: appElement.ref)
+            DispatchQueue.main.async {
+                completion(areas)
+            }
+        }
+    }
+
     private func fetchFrame(element: AXUIElement, screenHeight: CGFloat) -> CGRect? {
         var position = CGPoint.zero
         var size = CGSize.zero
@@ -151,3 +162,6 @@ final class AXManager: @unchecked Sendable {
         return CGRect(x: position.x, y: convertedY, width: size.width, height: size.height)
     }
 }
+
+// MARK: - ElementFetching
+extension AXManager: ElementFetching {}

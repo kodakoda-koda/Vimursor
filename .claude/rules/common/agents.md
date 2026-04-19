@@ -6,21 +6,16 @@ Located in `.claude/agents/`:
 
 | Agent | Purpose | When to Use |
 |-------|---------|-------------|
-| planner | Implementation planning | 新機能・リファクタリングの計画を GitHub Issue として作成するとき |
-| architect | System design | モジュール設計・依存関係・処理フローを決定するとき |
-| developer | Feature implementation | 計画に基づいて実際にコードを書くとき |
-| tdd-guide | Test-driven development | 新関数・バグ修正でテストファーストを強制したいとき |
-| code-reviewer | Code review | 実装後・コミット前に必ず実行 |
-| refactor-cleaner | Dead code cleanup | 未使用コード・インポート整理のとき |
+| planner | Planning & architecture | 新機能・リファクタリングの計画、モジュール設計・依存関係・処理フローを決定するとき |
+| developer | Feature implementation (TDD) | 計画に基づいて実際にコードを書くとき（テストファースト含む） |
+| code-reviewer | Code review & dead code detection | 実装後・コミット前に必ず実行 |
 
 ## Immediate Agent Usage
 
 No user prompt needed:
-1. Complex feature requests - Use **planner** agent
-2. Feature implementation - Use **developer** agent
+1. Complex feature requests / architectural decisions - Use **planner** agent
+2. Feature implementation / bug fix - Use **developer** agent
 3. Code just written/modified - Use **code-reviewer** agent
-4. Bug fix or new feature - Use **tdd-guide** agent
-5. Architectural decision - Use **architect** agent
 
 ## Parallel Task Execution
 

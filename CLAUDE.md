@@ -68,12 +68,10 @@ swift test --enable-code-coverage  # カバレッジ付きテスト
 
 *Rationale: ワークフロー改善の洞察は揮発性が高い。即座にキャプチャしなければ、そのコンテキストは次のセッションまでに失われる。*
 
-### Issue Management
+### Development Workflow
 
-実装計画・タスクは GitHub Issue で管理する。
-- Epic（機能グループ）: `[Epic N]` 形式のタイトル、`epic` ラベル
-- タスク（個別実装）: `[N-M]` 形式のタイトル、`task` ラベル
-- メモ（技術的知見・調査記録等）: `memo` ラベル
-- Issue テンプレートは `.github/ISSUE_TEMPLATE/` を使用
+**開発フローの詳細は `.claude/rules/common/git-workflow.md` を参照すること。**
+Discussion → Plan → Develop → Code Review → Commit（Issue単位） → PR（Epic単位）の順で進める。
+Issue管理・コミット/PR粒度のルールも同ファイルに記載。
 
 

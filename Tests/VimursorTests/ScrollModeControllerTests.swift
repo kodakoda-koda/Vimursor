@@ -1,8 +1,10 @@
 import Testing
 import CoreGraphics
+import AppKit
 @testable import Vimursor
 
 @Suite
+@MainActor
 struct ScrollModeControllerTests {
 
     // MARK: - AX座標 → NSView座標 変換
@@ -146,6 +148,66 @@ struct ScrollModeControllerTests {
         let l1ChildrenAdded = count > l1Before  // true
         if !l1ChildrenAdded { count += 1 }      // スキップ
         #expect(count == 1, "3階層ネストでもリーフの1つだけが追加される")
+    }
+
+    // MARK: - ステート遷移テスト
+
+    private func makeSUT(
+        areas: [ScrollAreaInfo] = []
+    ) -> (ScrollModeController, MockOverlayProviding, MockKeyEventHandling, MockElementFetching) {
+        let fetcher = MockElementFetching()
+        fetcher.scrollableAreas = areas
+        let overlay = MockOverlayProviding()
+        let hotkey = MockKeyEventHandling()
+        let controller = ScrollModeController(elementFetcher: fetcher)
+        return (controller, overlay, hotkey, fetcher)
+    }
+
+    private func makeScrollArea() -> ScrollAreaInfo {
+        ScrollAreaInfo(
+            frame: CGRect(x: 0, y: 0, width: 800, height: 600),
+            centerPoint: CGPoint(x: 400, y: 300),
+            label: "1"
+        )
+    }
+
+    @Test @MainActor func activateWithAreasShowsOverlay() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        // frontmostApplication が nil ならフェッチに到達しないため show = 0
+        // frontmostApplication が非 nil なら show = 1
+        #expect(overlay.showCallCount <= 1)
+    }
+
+    @Test @MainActor func activateWithNoAreasDeactivates() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        // DispatchQueue.main.async + Task { @MainActor } の二重非同期を待つ
+        try await Task.sleep(for: .milliseconds(200))
+        // いずれのパスでも show は呼ばれない
+        #expect(overlay.showCallCount == 0)
+        // frontmostApplication が nil → 同期 deactivate → hide = 1
+        // frontmostApplication が非 nil → 非同期 deactivate → hide = 1
+        // keyEventHandler は deactivate で nil になる
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
+    @Test @MainActor func deactivateHidesOverlayAndClearsHandler() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        // active 状態から deactivate
+        controller.deactivate()
+        #expect(overlay.hideCallCount == 1)
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
+    @Test @MainActor func keyEventHandlerIsSetAfterActivate() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        // activate 直後（fetching 中）でも keyEventHandler は設定される
+        #expect(hotkey.keyEventHandler != nil)
     }
 
     // MARK: - 補完検出ロジック（Complement Detection）

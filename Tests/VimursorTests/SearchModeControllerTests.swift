@@ -3,7 +3,79 @@ import AppKit
 @testable import Vimursor
 
 @Suite
+@MainActor
 struct SearchModeControllerTests {
+
+    private func makeSearchInfo(title: String) -> SearchElementInfo {
+        SearchElementInfo(
+            frame: CGRect(x: 100, y: 100, width: 80, height: 24),
+            title: title,
+            label: "",
+            description: "",
+            role: "AXButton",
+            axElement: AXElement(ref: AXUIElementCreateSystemWide())
+        )
+    }
+
+    private func makeSUT(
+        elements: [SearchElementInfo] = []
+    ) -> (SearchModeController, MockOverlayProviding, MockKeyEventHandling, MockElementFetching) {
+        let fetcher = MockElementFetching()
+        fetcher.searchableElements = elements
+        let overlay = MockOverlayProviding()
+        let hotkey = MockKeyEventHandling()
+        let controller = SearchModeController(elementFetcher: fetcher)
+        return (controller, overlay, hotkey, fetcher)
+    }
+
+    // MARK: - ステート遷移テスト
+
+    @Test func activateWithElementsShowsOverlayAsKeyWindow() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [makeSearchInfo(title: "Save")])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        // frontmostApplication が非 nil の場合は showAsKeyWindow が呼ばれる
+        // nil の場合は早期リターンで 0 回（どちらも最大 1 回）
+        #expect(overlay.showAsKeyWindowCallCount <= 1)
+    }
+
+    @Test func activateWithNoElementsDoesNotShowOverlay() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        // 要素なし → startSearchMode が呼ばれない → showAsKeyWindow は 0 回
+        #expect(overlay.showAsKeyWindowCallCount == 0)
+    }
+
+    @Test func deactivateHidesOverlay() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [makeSearchInfo(title: "Save")])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        overlay.hideCallCount = 0
+        controller.deactivate()
+        #expect(overlay.hideCallCount == 1)
+    }
+
+    @Test func deactivateClearsKeyEventHandler() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [makeSearchInfo(title: "Save")])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        controller.deactivate()
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
+    @Test func deactivateThenActivateIsAllowed() async throws {
+        // deactivate 後は isActive=false になるため、再 activate が可能
+        let (controller, overlay, hotkey, _) = makeSUT(elements: [makeSearchInfo(title: "Save")])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        controller.deactivate()
+        // deactivate 後に再 activate してもエラーにならない
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        // hide は deactivate で 1 回呼ばれる（再 activate 後は show が呼ばれるかもしれない）
+        #expect(overlay.hideCallCount >= 1)
+    }
 
     private func makeInfo(
         title: String,

@@ -48,13 +48,61 @@ swift test
 5. **テスト通過確認** — `swift test` で通ることを確認
 6. **リファクタリング** — コードを改善しながらテストをグリーンに保つ
 
+#### テストフレームワーク
+
+Swift Testing フレームワークを使う（XCTest ではない）:
+
+```swift
+import Testing
+@testable import Vimursor
+
+@Suite("LabelGenerator Tests")
+struct LabelGeneratorTests {
+    @Test("generates correct count of labels")
+    func generatesCorrectCount() {
+        let labels = LabelGenerator.generate(count: 5)
+        #expect(labels.count == 5)
+    }
+
+    @Test("empty input returns empty labels")
+    func emptyInput() {
+        let labels = LabelGenerator.generate(count: 0)
+        #expect(labels.isEmpty)
+    }
+}
+```
+
+#### システムAPIのモック
+
 システムAPI（AXUIElement・NSPanel・CGEventTap）は必ずプロトコルでラップしてモック可能にする：
 
 ```swift
+// プロトコルで依存を抽象化
 protocol AccessibilityProvider {
     func fetchClickableElements() -> [UIElementInfo]
 }
+
+// テスト用モック
+struct MockAccessibilityProvider: AccessibilityProvider {
+    var stubbedElements: [UIElementInfo] = []
+    func fetchClickableElements() -> [UIElementInfo] { stubbedElements }
+}
 ```
+
+#### Edge Cases You MUST Test
+
+1. **空の要素リスト** — fetchClickableElements が [] を返す場合
+2. **要素数がラベル数を超える** — 2文字ラベルへの繰り上がり
+3. **座標がゼロ・負** — 無効なAXUIElement座標のフィルタリング
+4. **ESC入力** — モードが正しく終了するか
+5. **部分一致・完全一致** — ラベル入力フィルタリングの境界値
+
+#### Test Anti-Patterns to Avoid
+
+- 実装の内部状態ではなく振る舞いをテストする
+- テスト間で状態を共有しない
+- システムAPIを直接呼び出すテストを書かない（モックを使う）
+- アサーションが曖昧なテスト（`#expect(value != nil)` だけ等）
 
 ### Step 3: Validate After Each Module
 
@@ -81,6 +129,18 @@ swift test --enable-code-coverage  # カバレッジ確認（80%+）
 全テスト通過後、ユーザーに確認してから `code-reviewer` エージェントを起動する。
 CRITICAL / HIGH の指摘は実装を修正してから完了とする。
 MEDIUM は対応できない場合はコメントに理由を記録する。
+
+---
+
+## TDD Quality Checklist
+
+- [ ] 公開関数にユニットテストがある
+- [ ] システムAPI呼び出しはモックでテストしている
+- [ ] エッジケースをカバーしている（空・境界値・無効値）
+- [ ] エラーパスをテストしている（ハッピーパスだけでない）
+- [ ] テストは独立している
+- [ ] アサーションが具体的で意味がある
+- [ ] カバレッジが80%以上
 
 ---
 

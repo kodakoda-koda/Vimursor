@@ -1,6 +1,6 @@
 ---
 name: code-reviewer
-description: Expert code review specialist. Proactively reviews code for quality, security, and maintainability. Use immediately after writing or modifying code. MUST BE USED for all code changes.
+description: Expert code review specialist. Proactively reviews code for quality, security, maintainability, and dead code. Use immediately after writing or modifying code. MUST BE USED for all code changes.
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: sonnet
 ---
@@ -15,7 +15,8 @@ When invoked:
 2. **Understand scope** — Identify which files changed, what feature/fix they relate to, and how they connect.
 3. **Read surrounding code** — Don't review changes in isolation. Read the full file and understand imports, dependencies, and call sites.
 4. **Apply review checklist** — Work through each category below, from CRITICAL to LOW.
-5. **Report findings** — Use the output format below. Only report issues you are confident about (>80% sure it is a real problem).
+5. **Dead code analysis** — Check for unused code introduced or exposed by the changes.
+6. **Report findings** — Use the output format below. Only report issues you are confident about (>80% sure it is a real problem).
 
 ## Confidence-Based Filtering
 
@@ -75,6 +76,24 @@ hotkeyManager?.onHintModeActivated = {
 hotkeyManager?.onHintModeActivated = { [weak self] in
     self?.overlayWindow?.toggle()
 }
+```
+
+### Dead Code & Duplicates (MEDIUM)
+
+変更に関連するデッドコード・重複を検出する：
+
+- **未使用のimport** — 変更ファイル内で使われていないimport
+- **未使用の関数・変数** — `swift build` 警告 or `grep` で参照なし
+- **コメントアウトされたコード** — 削除すべき
+- **重複ロジック** — 同じ処理が複数箇所にある場合、統合を提案
+
+検出コマンド:
+```bash
+# コンパイラ警告で未使用コードを検出
+swift build 2>&1 | grep "warning:"
+
+# シンボルの参照箇所を確認
+grep -r "SymbolName" Sources/ Tests/ --include="*.swift"
 ```
 
 ### Performance (MEDIUM)
