@@ -29,13 +29,44 @@ private enum SearchBarLayout {
     static let shadowColorAlpha: CGFloat = 0.3
 }
 
+// MARK: - ラベル描画定数
+private enum LabelStyle {
+    /// ラベルフォントサイズ（pt）
+    static let fontSize: CGFloat = 11
+    /// ラベルテキストパディング（px）
+    static let padding: CGFloat = 3
+    /// ラベル角丸半径（pt）
+    static let cornerRadius: CGFloat = 3
+    /// マッチラベル背景アルファ
+    static let matchBgAlpha: CGFloat = 0.95
+    /// 非マッチラベル背景アルファ
+    static let noMatchBgAlpha: CGFloat = 0.5
+    /// マッチラベル枠アルファ
+    static let matchBorderAlpha: CGFloat = 1.0
+    /// 非マッチラベル枠アルファ
+    static let noMatchBorderAlpha: CGFloat = 0.4
+}
+
+// MARK: - selecting 状態データ
+private struct SelectingData {
+    let matched: [SearchElementInfo]
+    let labels: [String]
+    let input: String
+}
+
 @MainActor
 final class SearchView: NSView {
     private var matchedElements: [SearchElementInfo] = []
     private var query: String = ""
 
+    /// selecting 状態のデータ（nil = searching 状態）
+    private var selectingData: SelectingData?
+
     // ブラー効果付きフローティングバーのコンテナ
     private let blurContainer: NSVisualEffectView
+
+    // selecting 中に blurContainer 上に重ねるオーバーレイ
+    private let selectingOverlay: NSView
 
     // NSTextField（検索バー部分）
     private let searchField: SearchTextField
@@ -50,10 +81,12 @@ final class SearchView: NSView {
 
     override init(frame: NSRect) {
         self.blurContainer = NSVisualEffectView()
+        self.selectingOverlay = NSView()
         self.searchField = SearchTextField()
         self.countLabel = SearchView.makeCountLabel()
         super.init(frame: frame)
         setupBlurContainer()
+        setupSelectingOverlay()
         setupTextField()
         setupCountLabel()
     }
@@ -81,6 +114,14 @@ final class SearchView: NSView {
 
         addSubview(blurContainer)
         updateBlurContainerFrame()
+    }
+
+    private func setupSelectingOverlay() {
+        selectingOverlay.wantsLayer = true
+        selectingOverlay.layer?.cornerRadius = SearchBarLayout.cornerRadius
+        selectingOverlay.layer?.backgroundColor = NSColor.systemBlue.withAlphaComponent(0.15).cgColor
+        selectingOverlay.isHidden = true
+        blurContainer.addSubview(selectingOverlay)
     }
 
     private func setupTextField() {
@@ -126,6 +167,8 @@ final class SearchView: NSView {
         // NSViewの原点は左下なので、下からのマージンをそのまま使う
         let y = SearchBarLayout.bottomMargin
         blurContainer.frame = CGRect(x: x, y: y, width: width, height: SearchBarLayout.height)
+        // selectingOverlay は blurContainer 全体を覆う
+        selectingOverlay.frame = CGRect(x: 0, y: 0, width: width, height: SearchBarLayout.height)
     }
 
     // MARK: - リサイズ対応
@@ -153,11 +196,37 @@ final class SearchView: NSView {
         window?.makeFirstResponder(searchField)
     }
 
+    func unfocusSearchField() {
+        window?.makeFirstResponder(nil)
+    }
+
+    /// selecting 状態に入る時・ラベル入力更新時に呼ぶ
+    func updateForSelecting(matched: [SearchElementInfo], labels: [String], input: String) {
+        selectingData = SelectingData(matched: matched, labels: labels, input: input)
+        searchField.isEditable = false
+        selectingOverlay.isHidden = false
+        needsDisplay = true
+    }
+
+    /// ESC で selecting → searching に戻る時に呼ぶ
+    func returnToSearching(query: String, matched: [SearchElementInfo]) {
+        selectingData = nil
+        searchField.isEditable = true
+        selectingOverlay.isHidden = true
+        self.query = query
+        self.matchedElements = matched
+        focusSearchField()
+        needsDisplay = true
+    }
+
     // MARK: - 描画
 
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         drawHighlights()
+        if let data = selectingData {
+            drawLabels(data: data)
+        }
     }
 
     private func drawHighlights() {
@@ -170,6 +239,40 @@ final class SearchView: NSView {
             NSColor.systemGreen.withAlphaComponent(0.12).setFill()
             path.fill()
         }
+    }
+
+    private func drawLabels(data: SelectingData) {
+        for (label, element) in zip(data.labels, data.matched) {
+            let isMatch = data.input.isEmpty || label.hasPrefix(data.input)
+            drawLabel(label: label, frame: element.frame, isMatch: isMatch)
+        }
+    }
+
+    private func drawLabel(label: String, frame: CGRect, isMatch: Bool) {
+        let font = NSFont.systemFont(ofSize: LabelStyle.fontSize, weight: .semibold)
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: isMatch ? NSColor.black : NSColor.gray
+        ]
+
+        let size = (label as NSString).size(withAttributes: attrs)
+        let padding = LabelStyle.padding
+        let boxWidth = size.width + padding * 2
+        let boxHeight = size.height + padding * 2
+
+        let origin = CGPoint(x: frame.minX, y: frame.maxY)
+        let boxRect = CGRect(x: origin.x, y: origin.y, width: boxWidth, height: boxHeight)
+
+        let path = NSBezierPath(roundedRect: boxRect, xRadius: LabelStyle.cornerRadius, yRadius: LabelStyle.cornerRadius)
+        let bgColor: NSColor = isMatch ? .white : .lightGray
+        bgColor.withAlphaComponent(isMatch ? LabelStyle.matchBgAlpha : LabelStyle.noMatchBgAlpha).setFill()
+        path.fill()
+        NSColor.black.withAlphaComponent(isMatch ? LabelStyle.matchBorderAlpha : LabelStyle.noMatchBorderAlpha).setStroke()
+        path.lineWidth = 1.0
+        path.stroke()
+
+        let textOrigin = CGPoint(x: origin.x + padding, y: origin.y + padding)
+        (label as NSString).draw(at: textOrigin, withAttributes: attrs)
     }
 
     // MARK: - ファクトリ

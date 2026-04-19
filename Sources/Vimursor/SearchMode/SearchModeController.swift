@@ -180,6 +180,7 @@ final class SearchModeController {
                 labels: labels,
                 input: ""
             )
+            enterSelectingState(matched: matched, labels: labels, input: "")
             setSelectingKeyHandler()
         }
     }
@@ -193,6 +194,7 @@ final class SearchModeController {
         if keyCode == SearchKeyCode.escape {
             // ESC → searching に戻る（クエリ維持）
             state = .searching(elements: elements, query: query, matched: matched)
+            returnToSearchingState(query: query, matched: matched)
             setSearchingKeyHandler()
             return
         }
@@ -234,6 +236,20 @@ final class SearchModeController {
             labels: labels,
             input: newInput
         )
+        enterSelectingState(matched: matched, labels: labels, input: newInput)
+    }
+
+    // MARK: - SearchView 状態連携
+
+    /// selecting 状態に入る時に SearchView を更新する
+    private func enterSelectingState(matched: [SearchElementInfo], labels: [String], input: String) {
+        searchView?.updateForSelecting(matched: matched, labels: labels, input: input)
+        searchView?.unfocusSearchField()
+    }
+
+    /// searching 状態に戻る時に SearchView を更新する
+    private func returnToSearchingState(query: String, matched: [SearchElementInfo]) {
+        searchView?.returnToSearching(query: query, matched: matched)
     }
 
     // MARK: - applyQuery
