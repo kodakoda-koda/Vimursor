@@ -77,6 +77,82 @@ struct SearchModeControllerTests {
         #expect(overlay.hideCallCount >= 1)
     }
 
+    // MARK: - マッチ件数による分岐テスト
+
+    @Test("マッチ1件でEnter → 即クリック（回帰テスト）")
+    func executeSearchWithSingleMatchClicksImmediately() async throws {
+        let element = makeSearchInfo(title: "Save")
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [element])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        // frontmostApplication が nil の場合は searchView が設定されないため、テストをスキップ
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // SearchView の onEnterPressed を直接発火
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(300))
+
+        // deactivate が呼ばれ、clickAt が 1 回実行されること
+        #expect(fetcher.clickAtCallCount == 1)
+        #expect(hotkey.keyEventHandler == nil)
+    }
+
+    @Test("マッチ2件以上でEnter → selecting 状態に遷移")
+    func executeSearchWithMultipleMatchesTransitionsToSelecting() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // SearchView の onEnterPressed を直接発火
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // selecting 状態ではクリックされない
+        #expect(fetcher.clickAtCallCount == 0)
+        // keyEventHandler が selecting モード（全キー消費）に変わること
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
+    @Test("selecting 中の ESC → searching に戻る（クエリ維持）")
+    func selectingEscReturnsToSearching() async throws {
+        let elements = [
+            makeSearchInfo(title: "Save"),
+            makeSearchInfo(title: "Save As")
+        ]
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: elements)
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+
+        guard let searchView = overlay.contentView?.subviews.first(where: { $0 is SearchView }) as? SearchView else {
+            return  // UI 環境なし（CI等）では SearchView が生成されない
+        }
+
+        // Enter で selecting に遷移
+        searchView.onEnterPressed?()
+        try await Task.sleep(for: .milliseconds(100))
+
+        // ESC で searching に戻る（ESC keyCode = 53）
+        let consumed = hotkey.simulateKey(53)
+        try await Task.sleep(for: .milliseconds(100))
+
+        #expect(consumed == true)
+        // searching に戻っているのでクリックなし
+        #expect(fetcher.clickAtCallCount == 0)
+        // searching 中は ESC のみ処理するハンドラが設定されていること
+        #expect(hotkey.keyEventHandler != nil)
+    }
+
     private func makeInfo(
         title: String,
         label: String = "",
