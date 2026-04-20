@@ -71,8 +71,8 @@ final class HotkeyManager: @unchecked Sendable {
             }
         }
 
-        // モード非アクティブ時はイベントをパススルーする。
-        // モード起動は KeyboardShortcuts（NSEvent.addGlobalMonitorForEvents）に委譲する。
+        // モード起動は KeyboardShortcuts.onKeyUp（Carbon ホットキー）側に委譲しており、
+        // この CGEventTap は通常入力の監視/消費のみを担当するためパススルーで安全。
         return Unmanaged.passRetained(event)
     }
 

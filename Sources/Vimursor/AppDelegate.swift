@@ -53,8 +53,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: appSettings
         )
 
-        // KeyboardShortcuts コールバックを登録する。
-        // NSEvent.addGlobalMonitorForEvents ベースのため、アクセシビリティ権限は不要。
+        // KeyboardShortcuts のコールバックを登録する。
+        // KeyboardShortcuts v1.14 のグローバルショートカットは Carbon hotkey ベース。
         // hotkeyManager が nil の間はコールバック内で何もしない（weak self チェーンで自然に対応）。
         //
         // 【二重登録について】

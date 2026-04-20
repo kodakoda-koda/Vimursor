@@ -4,7 +4,7 @@ import KeyboardShortcuts
 // MARK: - SettingsWindowController
 
 /// 設定ウィンドウを管理する NSWindowController。
-/// Appearance / Behavior / Shortcuts (placeholder) の3タブ構成。
+/// Appearance / Behavior / Shortcuts の3タブ構成。
 @MainActor
 final class SettingsWindowController: NSWindowController {
 
