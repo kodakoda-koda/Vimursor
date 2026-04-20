@@ -53,7 +53,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
     private let loginItemManager: LoginItemManager?
-    private let hintModeSettings: HintModeSettings
+    private let settings: AppSettings
 
     // MARK: - Initialization
 
@@ -63,7 +63,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
         loginItemManager: LoginItemManager? = nil,
-        hintModeSettings: HintModeSettings
+        settings: AppSettings = .shared
     ) {
         self.init(
             statusItem: SystemStatusItem(),
@@ -71,7 +71,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             onSearchMode: onSearchMode,
             onScrollMode: onScrollMode,
             loginItemManager: loginItemManager,
-            hintModeSettings: hintModeSettings
+            settings: settings
         )
     }
 
@@ -82,14 +82,14 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
         loginItemManager: LoginItemManager? = nil,
-        hintModeSettings: HintModeSettings
+        settings: AppSettings = .shared
     ) {
         self.statusItem = statusItem
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
         self.loginItemManager = loginItemManager
-        self.hintModeSettings = hintModeSettings
+        self.settings = settings
 
         super.init()
 
@@ -197,7 +197,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         if let item = menu.item(withTag: MenuItemTag.continuousHintMode) {
-            item.state = hintModeSettings.isContinuousMode ? .on : .off
+            item.state = settings.isContinuousMode ? .on : .off
         }
 
         if let item = menu.item(withTag: MenuItemTag.launchAtLogin) {
@@ -235,7 +235,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func toggleContinuousHintMode() {
-        hintModeSettings.toggle()
+        settings.toggleContinuousMode()
     }
 
     @objc private func quitApp() {

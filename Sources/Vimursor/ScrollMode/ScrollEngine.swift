@@ -7,12 +7,16 @@ enum ScrollDirection {
 struct ScrollAmount {
     let lines: Int32   // CGEvent wheel1 に渡す（正=上、負=下）
 
-    static func step(direction: ScrollDirection) -> ScrollAmount {
-        ScrollAmount(lines: direction == .up ? 3 : -3)
+    static func step(direction: ScrollDirection, settings: AppSettings = .shared) -> ScrollAmount {
+        let step = Int32(settings.scrollStepLines)
+        return ScrollAmount(lines: direction == .up ? step : -step)
     }
 
-    static func halfPage(direction: ScrollDirection) -> ScrollAmount {
-        ScrollAmount(lines: direction == .up ? 15 : -15)
+    static func halfPage(direction: ScrollDirection, settings: AppSettings = .shared) -> ScrollAmount {
+        // halfPage は step の 5 倍（固定比率）
+        let step = Int32(settings.scrollStepLines)
+        let halfPageLines = step * 5
+        return ScrollAmount(lines: direction == .up ? halfPageLines : -halfPageLines)
     }
 }
 

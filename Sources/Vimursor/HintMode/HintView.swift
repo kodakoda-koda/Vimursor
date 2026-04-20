@@ -1,10 +1,22 @@
 import AppKit
 
+// MARK: - ラベル描画定数（非設定項目）
+
+private enum HintLabelLayout {
+    static let padding: CGFloat = 3
+    static let cornerRadius: CGFloat = 3
+    static let noMatchBgAlpha: CGFloat = 0.5
+    static let noMatchBorderAlpha: CGFloat = 0.4
+    static let matchBorderAlpha: CGFloat = 1.0
+}
+
 final class HintView: NSView {
     private var hints: [UIElementInfo] = []
     private var inputPrefix: String = ""
+    private let settings: AppSettings
 
-    override init(frame: NSRect) {
+    init(frame: NSRect, settings: AppSettings = .shared) {
+        self.settings = settings
         super.init(frame: frame)
         wantsLayer = true
         layer?.backgroundColor = NSColor.clear.cgColor
@@ -29,14 +41,15 @@ final class HintView: NSView {
 
     private func drawLabel(hint: UIElementInfo, isMatch: Bool) {
         let label = hint.label
-        let font = NSFont.systemFont(ofSize: 11, weight: .semibold)
+        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
+        let textColor: NSColor = isMatch ? settings.labelTextColor : .gray
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: isMatch ? NSColor.black : NSColor.gray
+            .foregroundColor: textColor
         ]
 
         let size = (label as NSString).size(withAttributes: attrs)
-        let padding: CGFloat = 3
+        let padding = HintLabelLayout.padding
         let boxWidth = size.width + padding * 2
         let boxHeight = size.height + padding * 2
 
@@ -44,11 +57,14 @@ final class HintView: NSView {
         let origin = CGPoint(x: hint.frame.minX, y: hint.frame.maxY)
         let boxRect = CGRect(x: origin.x, y: origin.y, width: boxWidth, height: boxHeight)
 
-        let path = NSBezierPath(roundedRect: boxRect, xRadius: 3, yRadius: 3)
-        let bgColor: NSColor = isMatch ? NSColor.white : NSColor.lightGray
-        bgColor.withAlphaComponent(isMatch ? 0.95 : 0.5).setFill()
+        let cornerRadius = HintLabelLayout.cornerRadius
+        let path = NSBezierPath(roundedRect: boxRect, xRadius: cornerRadius, yRadius: cornerRadius)
+        let bgColor: NSColor = isMatch ? settings.labelBackgroundColor : .lightGray
+        let bgAlpha = isMatch ? settings.labelBackgroundOpacity : HintLabelLayout.noMatchBgAlpha
+        bgColor.withAlphaComponent(bgAlpha).setFill()
         path.fill()
-        NSColor.black.withAlphaComponent(isMatch ? 1.0 : 0.4).setStroke()
+        let borderAlpha = isMatch ? HintLabelLayout.matchBorderAlpha : HintLabelLayout.noMatchBorderAlpha
+        NSColor.black.withAlphaComponent(borderAlpha).setStroke()
         path.lineWidth = 1.0
         path.stroke()
 

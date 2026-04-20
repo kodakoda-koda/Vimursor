@@ -16,8 +16,8 @@ final class MockStatusItem: StatusItemProvider {
 @Suite("StatusBarControllerTests")
 struct StatusBarControllerTests {
 
-    private func makeSettings() -> HintModeSettings {
-        HintModeSettings(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    private func makeSettings() -> AppSettings {
+        AppSettings(defaults: UserDefaults(suiteName: UUID().uuidString)!)
     }
 
     @Test("onHintMode クロージャが呼ばれること")
@@ -32,7 +32,7 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateHintMode()
@@ -53,7 +53,7 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateSearchMode()
@@ -74,7 +74,7 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateScrollMode()
@@ -92,7 +92,7 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
         // Hint Mode, Search Mode, Scroll Mode, separator, About, separator,
         // Continuous Hint Mode, Launch at Login, separator, Quit = 10 items
@@ -108,7 +108,7 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
         let titles = mockItem.menu?.items.map(\.title) ?? []
         #expect(titles.contains("Continuous Hint Mode"))
@@ -123,7 +123,7 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
         let titles = mockItem.menu?.items.map(\.title) ?? []
         #expect(titles.contains("Hint Mode"))
