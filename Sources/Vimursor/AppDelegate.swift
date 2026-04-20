@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
@@ -52,6 +53,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             settings: appSettings
         )
 
+        // KeyboardShortcuts コールバックを登録する。
+        // NSEvent.addGlobalMonitorForEvents ベースのため、アクセシビリティ権限は不要。
+        // hotkeyManager が nil の間はコールバック内で何もしない（weak self チェーンで自然に対応）。
+        //
+        // 【二重登録について】
+        // StatusBarController のコールバック（メニューUI経由）と KeyboardShortcuts のコールバック
+        // （ショートカットキー経由）は、両方とも hotkeyManager.onXxxActivated を経由する。
+        // hotkeyManager.onXxxActivated 内の `guard hotkey.keyEventHandler == nil` により
+        // 二重起動を防止しているため、登録経路が2つあっても問題ない。
+        setupKeyboardShortcutsHandlers()
+
         // 権限チェック → 許可済みなら即 setupHotkeyManager、未許可なら Alert + ポーリング
         let checker = SystemAccessibilityPermissionChecker()
         if checker.isGranted() {
@@ -59,6 +71,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             showPermissionAlert()
             startPermissionPolling(checker: checker)
+        }
+    }
+
+    // MARK: - KeyboardShortcuts handlers
+
+    /// KeyboardShortcuts のコールバックを登録する。
+    /// Carbon ホットキーベースのため、アクセシビリティ権限不要で起動直後から有効になる。
+    private func setupKeyboardShortcutsHandlers() {
+        KeyboardShortcuts.onKeyUp(for: .hintMode) { [weak self] in
+            self?.hotkeyManager?.onHintModeActivated?()
+        }
+        KeyboardShortcuts.onKeyUp(for: .searchMode) { [weak self] in
+            self?.hotkeyManager?.onSearchModeActivated?()
+        }
+        KeyboardShortcuts.onKeyUp(for: .scrollMode) { [weak self] in
+            self?.hotkeyManager?.onScrollModeActivated?()
         }
     }
 

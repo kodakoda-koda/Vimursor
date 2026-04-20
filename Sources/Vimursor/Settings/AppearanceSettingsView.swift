@@ -17,7 +17,7 @@ final class AppearanceSettingsView: NSView {
         static let controlWidth: CGFloat = 200
         static let colorWellWidth: CGFloat = 44
         static let colorWellHeight: CGFloat = 28
-        static let stepperWidth: CGFloat = 22
+        static let stepperWidth: CGFloat = 15
         static let valueFieldWidth: CGFloat = 50
     }
 

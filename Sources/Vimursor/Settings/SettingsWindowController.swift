@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 
 // MARK: - SettingsWindowController
 
@@ -22,6 +23,7 @@ final class SettingsWindowController: NSWindowController {
     private let settings: AppSettings
     private var appearanceView: AppearanceSettingsView?
     private var behaviorView: BehaviorSettingsView?
+    private var shortcutsView: ShortcutsSettingsView?
 
     // MARK: - Initialization
 
@@ -131,17 +133,9 @@ final class SettingsWindowController: NSWindowController {
         let item = NSTabViewItem()
         item.label = "Shortcuts"
 
-        let placeholder = NSView()
-        let label = NSTextField(labelWithString: "Coming soon")
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .secondaryLabelColor
-        label.font = NSFont.systemFont(ofSize: 14)
-        placeholder.addSubview(label)
-        NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: placeholder.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: placeholder.centerYAnchor)
-        ])
-        item.view = placeholder
+        let view = ShortcutsSettingsView()
+        self.shortcutsView = view
+        item.view = view
 
         return item
     }
@@ -175,8 +169,10 @@ final class SettingsWindowController: NSWindowController {
 
     private func performReset() {
         settings.resetToDefaults()
+        KeyboardShortcuts.reset(.hintMode, .searchMode, .scrollMode)
         appearanceView?.reloadValues()
         behaviorView?.reloadValues()
+        shortcutsView?.reloadValues()
     }
 
     // MARK: - Show / Hide

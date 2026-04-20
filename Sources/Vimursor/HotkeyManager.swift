@@ -1,16 +1,6 @@
 import AppKit
 import CoreGraphics
 
-private enum KeyCode {
-    static let space: CGKeyCode = 49
-    static let slash: CGKeyCode = 44
-    static let j: CGKeyCode = 38
-}
-
-private enum ModifierFlags {
-    static let cmdShift: CGEventFlags = [.maskCommand, .maskShift]
-}
-
 // CGEventTap コールバックは非同期スレッドから呼ばれるため @unchecked Sendable を宣言し、
 // スレッド安全性の責任をこのクラスが負う
 final class HotkeyManager: @unchecked Sendable {
@@ -81,27 +71,8 @@ final class HotkeyManager: @unchecked Sendable {
             }
         }
 
-        if keyCode == KeyCode.space && flags == ModifierFlags.cmdShift {
-            DispatchQueue.main.async { [weak self] in
-                self?.onHintModeActivated?()
-            }
-            return nil
-        }
-
-        if keyCode == KeyCode.slash && flags == ModifierFlags.cmdShift {
-            DispatchQueue.main.async { [weak self] in
-                self?.onSearchModeActivated?()
-            }
-            return nil
-        }
-
-        if keyCode == KeyCode.j && flags == ModifierFlags.cmdShift {
-            DispatchQueue.main.async { [weak self] in
-                self?.onScrollModeActivated?()
-            }
-            return nil
-        }
-
+        // モード非アクティブ時はイベントをパススルーする。
+        // モード起動は KeyboardShortcuts（NSEvent.addGlobalMonitorForEvents）に委譲する。
         return Unmanaged.passRetained(event)
     }
 

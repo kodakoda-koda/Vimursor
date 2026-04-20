@@ -14,7 +14,7 @@ final class BehaviorSettingsView: NSView {
         static let rowHeight: CGFloat = 30
         static let rowSpacing: CGFloat = 12
         static let labelWidth: CGFloat = 200
-        static let stepperWidth: CGFloat = 22
+        static let stepperWidth: CGFloat = 15
         static let valueFieldWidth: CGFloat = 50
     }
 
