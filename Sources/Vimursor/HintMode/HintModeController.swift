@@ -16,13 +16,12 @@ final class HintModeController {
     private var hintView: HintView?
     private weak var overlayWindow: (any OverlayProviding)?
     private weak var hotkeyManager: (any KeyEventHandling)?
-    private let settings: HintModeSettings
+    private let settings: AppSettings
 
-    static let reactivationDelay: TimeInterval = 0.3
     static let clickDelay: TimeInterval = 0.05
     private(set) var reactivationTask: Task<Void, Never>?
 
-    init(settings: HintModeSettings, elementFetcher: any ElementFetching = AXManager()) {
+    init(settings: AppSettings = .shared, elementFetcher: any ElementFetching = AXManager()) {
         self.settings = settings
         self.elementFetcher = elementFetcher
     }
@@ -63,12 +62,12 @@ final class HintModeController {
             return
         }
 
-        let labels = LabelGenerator.generateLabels(count: elements.count)
+        let labels = LabelGenerator.generateLabels(count: elements.count, characterSet: settings.hintCharacterSet)
         let hints = elementFetcher.buildUIElementInfos(elements: elements, labels: labels)
 
         state = .active(hints: hints, input: "")
 
-        let view = HintView(frame: overlayWindow.contentView?.bounds ?? .zero)
+        let view = HintView(frame: overlayWindow.contentView?.bounds ?? .zero, settings: settings)
         view.autoresizingMask = [.width, .height]
         view.update(hints: hints, inputPrefix: "")
         overlayWindow.contentView?.addSubview(view)
@@ -169,7 +168,7 @@ final class HintModeController {
         reactivationTask = Task<Void, Never> { @MainActor [weak self] in
             guard let self else { return }
             do {
-                try await Task.sleep(for: .seconds(Self.reactivationDelay))
+                try await Task.sleep(for: .seconds(self.settings.reactivationDelay))
             } catch {
                 return  // CancellationError（Task.sleepの唯一のエラー）
             }

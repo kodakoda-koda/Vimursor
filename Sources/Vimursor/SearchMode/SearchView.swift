@@ -29,16 +29,12 @@ private enum SearchBarLayout {
     static let shadowColorAlpha: CGFloat = 0.3
 }
 
-// MARK: - ラベル描画定数
+// MARK: - ラベル描画定数（非設定項目）
 private enum LabelStyle {
-    /// ラベルフォントサイズ（pt）
-    static let fontSize: CGFloat = 11
     /// ラベルテキストパディング（px）
     static let padding: CGFloat = 3
     /// ラベル角丸半径（pt）
     static let cornerRadius: CGFloat = 3
-    /// マッチラベル背景アルファ
-    static let matchBgAlpha: CGFloat = 0.95
     /// 非マッチラベル背景アルファ
     static let noMatchBgAlpha: CGFloat = 0.5
     /// マッチラベル枠アルファ
@@ -74,12 +70,16 @@ final class SearchView: NSView {
     // selecting 状態を視覚的に示すオーバーレイ（blurContainer 上に重ねる）
     private let selectingOverlay: NSView
 
+    // 設定参照
+    private let settings: AppSettings
+
     // コントローラからセットされるコールバック
     var onQueryChanged: QueryChangedHandler?
     // Enter 確定時のコールバック（IME 変換確定との区別は NSTextField デリゲートが担う）
     var onEnterPressed: (() -> Void)?
 
-    override init(frame: NSRect) {
+    init(frame: NSRect, settings: AppSettings = .shared) {
+        self.settings = settings
         self.blurContainer = NSVisualEffectView()
         self.searchField = SearchTextField()
         self.countLabel = SearchView.makeCountLabel()
@@ -89,6 +89,11 @@ final class SearchView: NSView {
         setupTextField()
         setupCountLabel()
         setupSelectingOverlay()
+    }
+
+    @available(*, unavailable)
+    override init(frame: NSRect) {
+        fatalError("Use init(frame:settings:)")
     }
 
     required init?(coder: NSCoder) { fatalError() }
@@ -103,6 +108,7 @@ final class SearchView: NSView {
 
         // 角丸マスク（NSVisualEffectView は layer?.cornerRadius では角丸にならないため maskImage を使う）
         blurContainer.maskImage = Self.roundedRectMaskImage(cornerRadius: SearchBarLayout.cornerRadius)
+        blurContainer.alphaValue = settings.searchBarOpacity
 
         // ドロップシャドウの設定
         blurContainer.wantsLayer = true
@@ -260,10 +266,11 @@ final class SearchView: NSView {
     }
 
     private func drawLabel(label: String, frame: CGRect, isMatch: Bool) {
-        let font = NSFont.systemFont(ofSize: LabelStyle.fontSize, weight: .semibold)
+        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
+        let textColor: NSColor = isMatch ? settings.labelTextColor : .gray
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
-            .foregroundColor: isMatch ? NSColor.black : NSColor.gray
+            .foregroundColor: textColor
         ]
 
         let size = (label as NSString).size(withAttributes: attrs)
@@ -274,11 +281,17 @@ final class SearchView: NSView {
         let origin = CGPoint(x: frame.minX, y: frame.maxY)
         let boxRect = CGRect(x: origin.x, y: origin.y, width: boxWidth, height: boxHeight)
 
-        let path = NSBezierPath(roundedRect: boxRect, xRadius: LabelStyle.cornerRadius, yRadius: LabelStyle.cornerRadius)
-        let bgColor: NSColor = isMatch ? .white : .lightGray
-        bgColor.withAlphaComponent(isMatch ? LabelStyle.matchBgAlpha : LabelStyle.noMatchBgAlpha).setFill()
+        let path = NSBezierPath(
+            roundedRect: boxRect,
+            xRadius: LabelStyle.cornerRadius,
+            yRadius: LabelStyle.cornerRadius
+        )
+        let bgColor: NSColor = isMatch ? settings.labelBackgroundColor : .lightGray
+        let bgAlpha = isMatch ? settings.labelBackgroundOpacity : LabelStyle.noMatchBgAlpha
+        bgColor.withAlphaComponent(bgAlpha).setFill()
         path.fill()
-        NSColor.black.withAlphaComponent(isMatch ? LabelStyle.matchBorderAlpha : LabelStyle.noMatchBorderAlpha).setStroke()
+        let borderAlpha = isMatch ? LabelStyle.matchBorderAlpha : LabelStyle.noMatchBorderAlpha
+        NSColor.black.withAlphaComponent(borderAlpha).setStroke()
         path.lineWidth = 1.0
         path.stroke()
 

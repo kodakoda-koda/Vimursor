@@ -16,8 +16,8 @@ final class MockStatusItem: StatusItemProvider {
 @Suite("StatusBarControllerTests")
 struct StatusBarControllerTests {
 
-    private func makeSettings() -> HintModeSettings {
-        HintModeSettings(defaults: UserDefaults(suiteName: UUID().uuidString)!)
+    private func makeSettings() -> AppSettings {
+        AppSettings(defaults: UserDefaults(suiteName: UUID().uuidString)!)
     }
 
     @Test("onHintMode クロージャが呼ばれること")
@@ -32,7 +32,7 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateHintMode()
@@ -53,7 +53,7 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateSearchMode()
@@ -74,13 +74,29 @@ struct StatusBarControllerTests {
             onHintMode: { hintCalled = true },
             onSearchMode: { searchCalled = true },
             onScrollMode: { scrollCalled = true },
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
 
         controller.simulateScrollMode()
         #expect(hintCalled == false)
         #expect(searchCalled == false)
         #expect(scrollCalled == true)
+    }
+
+    @Test("onSettings クロージャが呼ばれること")
+    @MainActor
+    func settingsCallbackIsInvoked() {
+        var settingsCalled = false
+        let controller = StatusBarController(
+            statusItem: MockStatusItem(),
+            onHintMode: {},
+            onSearchMode: {},
+            onScrollMode: {},
+            onSettings: { settingsCalled = true },
+            settings: makeSettings()
+        )
+        controller.simulateSettings()
+        #expect(settingsCalled == true)
     }
 
     @Test("メニューが正しい項目数を持つこと")
@@ -92,11 +108,11 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
-        // Hint Mode, Search Mode, Scroll Mode, separator, About, separator,
-        // Continuous Hint Mode, Launch at Login, separator, Quit = 10 items
-        #expect(mockItem.menu?.items.count == 10)
+        // Hint Mode, Search Mode, Scroll Mode, separator, Settings..., About, separator,
+        // Continuous Hint Mode, Launch at Login, separator, Quit = 11 items
+        #expect(mockItem.menu?.items.count == 11)
     }
 
     @Test("メニューに Continuous Hint Mode 項目が含まれること")
@@ -108,7 +124,7 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
         let titles = mockItem.menu?.items.map(\.title) ?? []
         #expect(titles.contains("Continuous Hint Mode"))
@@ -123,12 +139,13 @@ struct StatusBarControllerTests {
             onHintMode: {},
             onSearchMode: {},
             onScrollMode: {},
-            hintModeSettings: makeSettings()
+            settings: makeSettings()
         )
         let titles = mockItem.menu?.items.map(\.title) ?? []
         #expect(titles.contains("Hint Mode"))
         #expect(titles.contains("Search Mode"))
         #expect(titles.contains("Scroll Mode"))
+        #expect(titles.contains("Settings..."))
         #expect(titles.contains("About Vimursor"))
         #expect(titles.contains("Launch at Login"))
         #expect(titles.contains("Quit Vimursor"))

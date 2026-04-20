@@ -7,10 +7,10 @@ import AppKit
 @MainActor
 struct HintModeControllerTests {
 
-    private func makeSettings(continuous: Bool = false) -> HintModeSettings {
+    private func makeSettings(continuous: Bool = false) -> AppSettings {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        defaults.set(continuous, forKey: HintModeDefaultsKey.continuousMode)
-        return HintModeSettings(defaults: defaults)
+        defaults.set(continuous, forKey: AppSettingsKey.isContinuousMode)
+        return AppSettings(defaults: defaults)
     }
 
     private func makeSUT(
@@ -27,10 +27,13 @@ struct HintModeControllerTests {
         return (controller, overlay, hotkey, fetcher)
     }
 
-    // MARK: - reactivationDelay 定数
+    // MARK: - reactivationDelay デフォルト値
 
-    @Test func reactivationDelayIsThreeHundredMilliseconds() {
-        #expect(HintModeController.reactivationDelay == 0.3)
+    @Test func reactivationDelayDefaultIsThreeHundredMilliseconds() {
+        let defaults = UserDefaults(suiteName: UUID().uuidString)!
+        let settings = AppSettings(defaults: defaults)
+        #expect(settings.reactivationDelay == AppSettings.Defaults.reactivationDelay)
+        #expect(settings.reactivationDelay == 0.3)
     }
 
     // MARK: - deactivate() が reactivationTask をクリアすること
@@ -41,11 +44,11 @@ struct HintModeControllerTests {
         #expect(controller.reactivationTask == nil)
     }
 
-    // MARK: - HintModeSettings の注入
+    // MARK: - AppSettings の注入
 
     @Test func controllerAcceptsSettings() {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
-        let settings = HintModeSettings(defaults: defaults)
+        let settings = AppSettings(defaults: defaults)
         let controller = HintModeController(settings: settings)
         controller.deactivate()
         #expect(controller.reactivationTask == nil)

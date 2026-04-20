@@ -1,4 +1,5 @@
 import AppKit
+import KeyboardShortcuts
 import os
 
 private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar")
@@ -8,6 +9,9 @@ private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar"
 private enum MenuItemTag {
     static let launchAtLogin = 100
     static let continuousHintMode = 101
+    static let hintMode = 102
+    static let searchMode = 103
+    static let scrollMode = 104
 }
 
 // MARK: - Protocol
@@ -52,8 +56,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let onHintMode: () -> Void
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
+    private let onSettings: (() -> Void)?
     private let loginItemManager: LoginItemManager?
-    private let hintModeSettings: HintModeSettings
+    private let settings: AppSettings
 
     // MARK: - Initialization
 
@@ -62,16 +67,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
-        hintModeSettings: HintModeSettings
+        settings: AppSettings = .shared
     ) {
         self.init(
             statusItem: SystemStatusItem(),
             onHintMode: onHintMode,
             onSearchMode: onSearchMode,
             onScrollMode: onScrollMode,
+            onSettings: onSettings,
             loginItemManager: loginItemManager,
-            hintModeSettings: hintModeSettings
+            settings: settings
         )
     }
 
@@ -81,15 +88,17 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
-        hintModeSettings: HintModeSettings
+        settings: AppSettings = .shared
     ) {
         self.statusItem = statusItem
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
+        self.onSettings = onSettings
         self.loginItemManager = loginItemManager
-        self.hintModeSettings = hintModeSettings
+        self.settings = settings
 
         super.init()
 
@@ -120,31 +129,45 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let hintItem = NSMenuItem(
             title: "Hint Mode",
             action: #selector(activateHintMode),
-            keyEquivalent: " "   // Space
+            keyEquivalent: ""
         )
-        hintItem.keyEquivalentModifierMask = [.command, .shift]
         hintItem.target = self
+        hintItem.tag = MenuItemTag.hintMode
+        hintItem.setShortcut(for: .hintMode)
         menu.addItem(hintItem)
 
         let searchItem = NSMenuItem(
             title: "Search Mode",
             action: #selector(activateSearchMode),
-            keyEquivalent: "?"
+            keyEquivalent: ""
         )
-        searchItem.keyEquivalentModifierMask = [.command]
         searchItem.target = self
+        searchItem.tag = MenuItemTag.searchMode
+        searchItem.setShortcut(for: .searchMode)
         menu.addItem(searchItem)
 
         let scrollItem = NSMenuItem(
             title: "Scroll Mode",
             action: #selector(activateScrollMode),
-            keyEquivalent: "j"
+            keyEquivalent: ""
         )
-        scrollItem.keyEquivalentModifierMask = [.command, .shift]
         scrollItem.target = self
+        scrollItem.tag = MenuItemTag.scrollMode
+        scrollItem.setShortcut(for: .scrollMode)
         menu.addItem(scrollItem)
 
         menu.addItem(.separator())
+
+        // ── Settings ──────────────────────────────
+        let settingsItem = NSMenuItem(
+            title: "Settings...",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.keyEquivalentModifierMask = [.command]
+        settingsItem.target = self
+        settingsItem.isEnabled = (onSettings != nil)
+        menu.addItem(settingsItem)
 
         // ── About ─────────────────────────────────
         let aboutItem = NSMenuItem(
@@ -196,8 +219,11 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     // MARK: - NSMenuDelegate
 
     func menuWillOpen(_ menu: NSMenu) {
+        // メニューが開いている間は Carbon ホットキーをバッファしないよう無効化する
+        KeyboardShortcuts.disable(.hintMode, .searchMode, .scrollMode)
+
         if let item = menu.item(withTag: MenuItemTag.continuousHintMode) {
-            item.state = hintModeSettings.isContinuousMode ? .on : .off
+            item.state = settings.isContinuousMode ? .on : .off
         }
 
         if let item = menu.item(withTag: MenuItemTag.launchAtLogin) {
@@ -210,6 +236,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
                 item.state = .off
             }
         }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        KeyboardShortcuts.enable(.hintMode, .searchMode, .scrollMode)
     }
 
     // MARK: - Menu actions
@@ -226,6 +256,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onScrollMode()
     }
 
+    @objc private func openSettings() {
+        onSettings?()
+    }
+
     @objc private func showAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
@@ -235,7 +269,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     @objc private func toggleContinuousHintMode() {
-        hintModeSettings.toggle()
+        settings.toggleContinuousMode()
     }
 
     @objc private func quitApp() {
@@ -255,6 +289,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func simulateScrollMode() {
         onScrollMode()
+    }
+
+    func simulateSettings() {
+        onSettings?()
     }
     #endif
 }
