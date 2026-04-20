@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var searchModeController: SearchModeController?
     private var scrollModeController: ScrollModeController?
     private var statusBarController: StatusBarController?
+    private var settingsWindowController: SettingsWindowController?
     private var permissionMonitor: AccessibilityPermissionMonitor?
     private var loginItemManager: LoginItemManager?
     private let appSettings = AppSettings.shared
@@ -36,12 +37,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         loginManager.syncWithSystem()
         self.loginItemManager = loginManager
 
+        // 設定ウィンドウコントローラを生成（遅延なしで保持）
+        let settingsController = SettingsWindowController(settings: appSettings)
+        self.settingsWindowController = settingsController
+
         // メニューバーアイコンは権限に関わらず常に表示。
         // モード起動コールバックは hotkeyManager が nil の場合は何もしない（weak self チェーンで自然に対応）。
         self.statusBarController = StatusBarController(
             onHintMode: { [weak self] in self?.hotkeyManager?.onHintModeActivated?() },
             onSearchMode: { [weak self] in self?.hotkeyManager?.onSearchModeActivated?() },
             onScrollMode: { [weak self] in self?.hotkeyManager?.onScrollModeActivated?() },
+            onSettings: { [weak settingsController] in settingsController?.showSettingsWindow() },
             loginItemManager: loginManager,
             settings: appSettings
         )

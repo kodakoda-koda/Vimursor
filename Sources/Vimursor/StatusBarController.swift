@@ -52,6 +52,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let onHintMode: () -> Void
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
+    private let onSettings: (() -> Void)?
     private let loginItemManager: LoginItemManager?
     private let settings: AppSettings
 
@@ -62,6 +63,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
         settings: AppSettings = .shared
     ) {
@@ -70,6 +72,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             onHintMode: onHintMode,
             onSearchMode: onSearchMode,
             onScrollMode: onScrollMode,
+            onSettings: onSettings,
             loginItemManager: loginItemManager,
             settings: settings
         )
@@ -81,6 +84,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
         settings: AppSettings = .shared
     ) {
@@ -88,6 +92,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
+        self.onSettings = onSettings
         self.loginItemManager = loginItemManager
         self.settings = settings
 
@@ -145,6 +150,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         menu.addItem(scrollItem)
 
         menu.addItem(.separator())
+
+        // ── Settings ──────────────────────────────
+        let settingsItem = NSMenuItem(
+            title: "Settings...",
+            action: #selector(openSettings),
+            keyEquivalent: ","
+        )
+        settingsItem.keyEquivalentModifierMask = [.command]
+        settingsItem.target = self
+        menu.addItem(settingsItem)
 
         // ── About ─────────────────────────────────
         let aboutItem = NSMenuItem(
@@ -226,6 +241,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onScrollMode()
     }
 
+    @objc private func openSettings() {
+        onSettings?()
+    }
+
     @objc private func showAbout() {
         NSApp.orderFrontStandardAboutPanel(nil)
     }
@@ -255,6 +274,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func simulateScrollMode() {
         onScrollMode()
+    }
+
+    func simulateSettings() {
+        onSettings?()
     }
     #endif
 }

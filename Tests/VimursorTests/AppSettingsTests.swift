@@ -143,6 +143,8 @@ struct AppSettingsTests {
         settings.isContinuousMode = false
         settings.reactivationDelay = 1.0
         settings.scrollStepLines = 10
+        settings.labelTextColor = .red
+        settings.labelBackgroundColor = .blue
 
         settings.resetToDefaults()
 
@@ -153,6 +155,8 @@ struct AppSettingsTests {
         #expect(settings.isContinuousMode == AppSettings.Defaults.isContinuousMode)
         #expect(settings.reactivationDelay == AppSettings.Defaults.reactivationDelay)
         #expect(settings.scrollStepLines == AppSettings.Defaults.scrollStepLines)
+        #expect(settings.labelTextColor == AppSettings.Defaults.labelTextColor)
+        #expect(settings.labelBackgroundColor == AppSettings.Defaults.labelBackgroundColor)
     }
 
     // MARK: - isContinuousMode キー互換性

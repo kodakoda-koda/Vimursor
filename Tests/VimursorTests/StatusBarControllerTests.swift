@@ -83,6 +83,22 @@ struct StatusBarControllerTests {
         #expect(scrollCalled == true)
     }
 
+    @Test("onSettings クロージャが呼ばれること")
+    @MainActor
+    func settingsCallbackIsInvoked() {
+        var settingsCalled = false
+        let controller = StatusBarController(
+            statusItem: MockStatusItem(),
+            onHintMode: {},
+            onSearchMode: {},
+            onScrollMode: {},
+            onSettings: { settingsCalled = true },
+            settings: makeSettings()
+        )
+        controller.simulateSettings()
+        #expect(settingsCalled == true)
+    }
+
     @Test("メニューが正しい項目数を持つこと")
     @MainActor
     func menuHasCorrectItemCount() {
@@ -94,9 +110,9 @@ struct StatusBarControllerTests {
             onScrollMode: {},
             settings: makeSettings()
         )
-        // Hint Mode, Search Mode, Scroll Mode, separator, About, separator,
-        // Continuous Hint Mode, Launch at Login, separator, Quit = 10 items
-        #expect(mockItem.menu?.items.count == 10)
+        // Hint Mode, Search Mode, Scroll Mode, separator, Settings..., About, separator,
+        // Continuous Hint Mode, Launch at Login, separator, Quit = 11 items
+        #expect(mockItem.menu?.items.count == 11)
     }
 
     @Test("メニューに Continuous Hint Mode 項目が含まれること")
@@ -129,6 +145,7 @@ struct StatusBarControllerTests {
         #expect(titles.contains("Hint Mode"))
         #expect(titles.contains("Search Mode"))
         #expect(titles.contains("Scroll Mode"))
+        #expect(titles.contains("Settings..."))
         #expect(titles.contains("About Vimursor"))
         #expect(titles.contains("Launch at Login"))
         #expect(titles.contains("Quit Vimursor"))
