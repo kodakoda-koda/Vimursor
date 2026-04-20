@@ -72,8 +72,9 @@ enum ScrollTarget {
     ) {
         guard depth < Limits.collectMaxDepth else { return }
 
+        let frame = AXAttributes.frame(of: element)
         let selfIsScrollable = isScrollable(element: element)
-            && AXAttributes.frame(of: element).map {
+            && frame.map {
                 $0.width >= Limits.minScrollAreaSize && $0.height >= Limits.minScrollAreaSize
             } ?? false
 
@@ -88,16 +89,16 @@ enum ScrollTarget {
         }
         let childrenAdded = result.count > countBefore
 
-        if selfIsScrollable {
-            if !childrenAdded, let f = AXAttributes.frame(of: element) {
+        if selfIsScrollable, let f = frame {
+            if !childrenAdded {
                 // リーフ: そのまま追加
                 let center = CGPoint(x: f.midX, y: f.midY)
                 let label = String(result.count + 1)
                 result.append(ScrollAreaInfo(frame: f, centerPoint: center, label: label))
-            } else if childrenAdded, let parentFrame = AXAttributes.frame(of: element) {
+            } else {
                 // 補完検出: 子にスクロール領域があるが、カバーされていない分割領域も追加
                 let addedAreas = Array(result[countBefore..<result.count])
-                addComplementRegions(element: element, parentFrame: parentFrame, existingAreas: addedAreas, into: &result)
+                addComplementRegions(element: element, parentFrame: f, existingAreas: addedAreas, into: &result)
             }
         }
     }
