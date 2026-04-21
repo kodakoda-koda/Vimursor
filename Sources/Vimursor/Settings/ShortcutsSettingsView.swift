@@ -4,7 +4,7 @@ import KeyboardShortcuts
 // MARK: - ShortcutsSettingsView
 
 /// Shortcuts タブのコンテンツビュー。
-/// ヒント／検索／スクロールモードの起動ショートカットを RecorderCocoa でカスタマイズできる。
+/// ヒント／検索／スクロールモードの起動ショートカットを ShortcutRecorderField でカスタマイズできる。
 @MainActor
 final class ShortcutsSettingsView: NSView {
 
@@ -20,9 +20,9 @@ final class ShortcutsSettingsView: NSView {
 
     // MARK: - Recorders
 
-    private let hintModeRecorder = KeyboardShortcuts.RecorderCocoa(for: .hintMode)
-    private let searchModeRecorder = KeyboardShortcuts.RecorderCocoa(for: .searchMode)
-    private let scrollModeRecorder = KeyboardShortcuts.RecorderCocoa(for: .scrollMode)
+    private let hintModeRecorder = ShortcutRecorderField(for: .hintMode)
+    private let searchModeRecorder = ShortcutRecorderField(for: .searchMode)
+    private let scrollModeRecorder = ShortcutRecorderField(for: .scrollMode)
 
     // MARK: - Initialization
 
@@ -37,7 +37,7 @@ final class ShortcutsSettingsView: NSView {
     // MARK: - Setup
 
     private func setupLayout() {
-        let rows: [(String, KeyboardShortcuts.RecorderCocoa)] = [
+        let rows: [(String, ShortcutRecorderField)] = [
             ("Hint Mode:", hintModeRecorder),
             ("Search Mode:", searchModeRecorder),
             ("Scroll Mode:", scrollModeRecorder)
@@ -77,8 +77,8 @@ final class ShortcutsSettingsView: NSView {
 
     // MARK: - Public
 
-    /// KeyboardShortcuts.reset() は UserDefaults を更新し、RecorderCocoa は
-    /// NSUserDefaultsDidChangeNotification を監視して自動的に表示を更新する。
+    /// KeyboardShortcuts.reset() は UserDefaults を更新し、ShortcutRecorderField は
+    /// KeyboardShortcuts_shortcutByNameDidChange 通知を監視して自動的に表示を更新する。
     /// 明示的な操作は不要。このメソッドは AppearanceSettingsView / BehaviorSettingsView
     /// との API 対称性のために提供する。
     func reloadValues() {}
