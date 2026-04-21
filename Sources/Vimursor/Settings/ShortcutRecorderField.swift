@@ -5,9 +5,9 @@ import Carbon.HIToolbox
 // MARK: - Key Codes
 
 private enum KeyCode {
-    static let escape: UInt16 = 53
-    static let delete: UInt16 = 51
-    static let deleteForward: UInt16 = 117
+    static let escape: UInt16 = UInt16(kVK_Escape)
+    static let delete: UInt16 = UInt16(kVK_Delete)
+    static let deleteForward: UInt16 = UInt16(kVK_ForwardDelete)
 }
 
 // MARK: - ShortcutRecorderField
@@ -29,8 +29,9 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
     // MARK: - State
 
     private let shortcutName: KeyboardShortcuts.Name
-    private var eventMonitor: Any?
-    private var shortcutChangeObserver: NSObjectProtocol?
+    // nonisolated(unsafe) により deinit からのアクセスを可能にする（NSEvent / NotificationCenter API はスレッドセーフ）
+    nonisolated(unsafe) private var eventMonitor: Any?
+    nonisolated(unsafe) private var shortcutChangeObserver: NSObjectProtocol?
     private var cancelButtonCell: NSButtonCell?
 
     // MARK: - Init
@@ -52,6 +53,15 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) not supported") }
+
+    deinit {
+        if let observer = shortcutChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
+        if let monitor = eventMonitor {
+            NSEvent.removeMonitor(monitor)
+        }
+    }
 
     // MARK: - Intrinsic Size
 
@@ -137,6 +147,11 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
         // 録音中は誤ってショートカットが発火しないよう監視を一時停止
         KeyboardShortcuts.isEnabled = false
 
+        // 既存の monitor を先に解除してから新規登録（二重登録防止）
+        if let existing = eventMonitor {
+            NSEvent.removeMonitor(existing)
+            eventMonitor = nil
+        }
         eventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.keyDown]) { [weak self] event in
             guard let self else { return event }
             return self.handleKeyDown(event)

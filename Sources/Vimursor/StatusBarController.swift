@@ -226,6 +226,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         // setShortcut(for:) が "/" + [.command, .shift] を設定するため、
         // "?" + [.command] に補正して ⌘⇧/ を正しく表示させる。
         if let item = menu.item(withTag: MenuItemTag.searchMode),
+           item.keyEquivalentModifierMask.contains(.command),
            item.keyEquivalentModifierMask.contains(.shift),
            item.keyEquivalent == "/" {
             item.keyEquivalent = "?"
