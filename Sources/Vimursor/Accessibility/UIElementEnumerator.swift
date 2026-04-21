@@ -1,5 +1,14 @@
 import AppKit
 
+private enum Limits {
+    /// クリック可能要素探索の最大深さ（無限再帰防止）
+    static let clickableMaxDepth = 25
+    /// 検索可能要素探索の最大深さ
+    static let searchableMaxDepth = 30
+    /// 検索可能要素の最大取得数（メモリ保護）
+    static let searchableMaxCount = 3000
+}
+
 enum UIElementEnumerator {
     private static let clickableRoles: Set<String> = [
         "AXButton", "AXLink", "AXCheckBox", "AXRadioButton",
@@ -24,7 +33,7 @@ enum UIElementEnumerator {
         into result: inout [AXUIElement],
         depth: Int
     ) {
-        guard depth < 25 else { return }  // 無限再帰防止
+        guard depth < Limits.clickableMaxDepth else { return }  // 無限再帰防止
 
         if isClickable(element: element) {
             result.append(element)
@@ -74,7 +83,7 @@ enum UIElementEnumerator {
         into result: inout [AXUIElement],
         depth: Int
     ) {
-        guard depth < 30, result.count < 3000 else { return }
+        guard depth < Limits.searchableMaxDepth, result.count < Limits.searchableMaxCount else { return }
 
         var hiddenRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(element, "AXHidden" as CFString, &hiddenRef) == .success,

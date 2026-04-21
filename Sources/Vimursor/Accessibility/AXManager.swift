@@ -140,26 +140,10 @@ final class AXManager: @unchecked Sendable {
     }
 
     private func fetchFrame(element: AXUIElement, screenHeight: CGFloat) -> CGRect? {
-        var position = CGPoint.zero
-        var size = CGSize.zero
-
-        var posRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, "AXPosition" as CFString, &posRef) == .success,
-              let posRef else { return nil }
-        let posVal = posRef as! AXValue  // AXValue は CF型なので force cast が正しい
-        AXValueGetValue(posVal, .cgPoint, &position)
-
-        var sizeRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, "AXSize" as CFString, &sizeRef) == .success,
-              let sizeRef else { return nil }
-        let sizeVal = sizeRef as! AXValue
-        AXValueGetValue(sizeVal, .cgSize, &size)
-
-        guard size.width > 0, size.height > 0 else { return nil }
-
+        guard let axFrame = AXAttributes.frame(of: element) else { return nil }
         // AX座標（原点:左上）→ NSWindow座標（原点:左下）変換
-        let convertedY = screenHeight - position.y - size.height
-        return CGRect(x: position.x, y: convertedY, width: size.width, height: size.height)
+        let convertedY = screenHeight - axFrame.origin.y - axFrame.size.height
+        return CGRect(x: axFrame.origin.x, y: convertedY, width: axFrame.size.width, height: axFrame.size.height)
     }
 }
 
