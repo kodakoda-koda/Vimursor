@@ -222,6 +222,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         // メニューが開いている間は Carbon ホットキーをバッファしないよう無効化する
         KeyboardShortcuts.disable(.hintMode, .searchMode, .scrollMode)
 
+        // macOS のメニュー描画エンジンは Shift+記号キー（例: Shift+/）の表示を正しく描画できない。
+        // setShortcut(for:) が "/" + [.command, .shift] を設定するため、
+        // "?" + [.command] に補正して ⌘⇧/ を正しく表示させる。
+        if let item = menu.item(withTag: MenuItemTag.searchMode),
+           item.keyEquivalentModifierMask.contains(.shift),
+           item.keyEquivalent == "/" {
+            item.keyEquivalent = "?"
+            item.keyEquivalentModifierMask.remove(.shift)
+        }
+
         if let item = menu.item(withTag: MenuItemTag.continuousHintMode) {
             item.state = settings.isContinuousMode ? .on : .off
         }
