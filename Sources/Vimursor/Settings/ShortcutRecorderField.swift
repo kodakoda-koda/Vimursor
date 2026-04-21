@@ -88,6 +88,7 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
 
     private func setUpObserver() {
         let notificationName = Notification.Name("KeyboardShortcuts_shortcutByNameDidChange")
+        let expectedName = shortcutName
         shortcutChangeObserver = NotificationCenter.default.addObserver(
             forName: notificationName,
             object: nil,
@@ -96,9 +97,11 @@ final class ShortcutRecorderField: NSSearchField, NSSearchFieldDelegate {
             guard
                 let self,
                 let name = notification.userInfo?["name"] as? KeyboardShortcuts.Name,
-                name == self.shortcutName
+                name == expectedName
             else { return }
-            self.refreshDisplay()
+            MainActor.assumeIsolated {
+                self.refreshDisplay()
+            }
         }
     }
 
