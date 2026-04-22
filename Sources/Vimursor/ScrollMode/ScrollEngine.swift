@@ -44,15 +44,21 @@ enum ScrollEngine {
     /// ページ端までスクロール（gg/G）
     /// line 単位の巨大イベントは Chrome/Electron で無視されるため、
     /// pixel 単位のイベントを時間分散して送信する。
+    /// 返り値の DispatchWorkItem を cancel() することで未送信イベントを中断可能。
+    @discardableResult
     static func scrollToExtreme(
         direction: ScrollDirection,
         targetPoint: CGPoint? = nil
-    ) {
+    ) -> DispatchWorkItem {
         let pixelsPerEvent: Int32 = 5_000
         let eventCount = 10
         let pixels = direction == .up ? pixelsPerEvent : -pixelsPerEvent
+
+        // cancel() でキャンセルフラグを立てるためのセンチネル
+        let sentinel = DispatchWorkItem { }
         for i in 0..<eventCount {
             DispatchQueue.global().asyncAfter(deadline: .now() + Double(i) * 0.02) {
+                guard !sentinel.isCancelled else { return }
                 let event = CGEvent(
                     scrollWheelEvent2Source: nil,
                     units: .pixel,
@@ -67,5 +73,6 @@ enum ScrollEngine {
                 event?.post(tap: .cghidEventTap)
             }
         }
+        return sentinel
     }
 }

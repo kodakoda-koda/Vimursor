@@ -56,6 +56,8 @@ final class ScrollModeController {
     private let elementFetcher: any ElementFetching
     /// `g` キーが1回押された状態を保持する（gg 入力のため）
     private var pendingG: Bool = false
+    /// scrollToExtreme の進行中イベントをキャンセルするためのハンドル
+    private var extremeScrollToken: DispatchWorkItem?
 
     init(elementFetcher: any ElementFetching = AXManager()) {
         self.elementFetcher = elementFetcher
@@ -99,6 +101,12 @@ final class ScrollModeController {
             if shouldConsume {
                 Task { @MainActor [weak self] in
                     self?.handleKey(keyCode: keyCode, flags: flags)
+                }
+            } else if self.pendingG {
+                // 非消費キー（Cmd+Tab 等）でも pendingG をリセットし、
+                // 意図しない gg 発火を防ぐ
+                Task { @MainActor [weak self] in
+                    self?.pendingG = false
                 }
             }
             return shouldConsume
@@ -144,6 +152,8 @@ final class ScrollModeController {
     func deactivate() {
         state = .inactive
         pendingG = false
+        extremeScrollToken?.cancel()
+        extremeScrollToken = nil
         scrollAreaView?.removeFromSuperview()
         scrollAreaView = nil
         indicatorView?.removeFromSuperview()
@@ -172,7 +182,10 @@ final class ScrollModeController {
         // G（Shift+g）: ページ末尾へスクロール
         if keyCode == ScrollKeyCode.g && isShift {
             pendingG = false
-            ScrollEngine.scrollToExtreme(direction: .down, targetPoint: areas[selectedIndex].centerPoint)
+            extremeScrollToken?.cancel()
+            extremeScrollToken = ScrollEngine.scrollToExtreme(
+                direction: .down, targetPoint: areas[selectedIndex].centerPoint
+            )
             return
         }
 
@@ -180,7 +193,10 @@ final class ScrollModeController {
         if keyCode == ScrollKeyCode.g {
             if pendingG {
                 pendingG = false
-                ScrollEngine.scrollToExtreme(direction: .up, targetPoint: areas[selectedIndex].centerPoint)
+                extremeScrollToken?.cancel()
+                extremeScrollToken = ScrollEngine.scrollToExtreme(
+                    direction: .up, targetPoint: areas[selectedIndex].centerPoint
+                )
             } else {
                 pendingG = true
             }
