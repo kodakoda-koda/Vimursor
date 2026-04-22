@@ -5,17 +5,13 @@ private enum Limits {
     static let ancestorMaxDepth = 10
     /// スクロール可能要素収集の最大深さ
     static let collectMaxDepth = 20
-    /// 分割ポイント検出の最大深さ
-    static let splitMaxDepth = 5
     /// スクロール領域として認識する最小サイズ（ポイント）
     static let minScrollAreaSize: CGFloat = 100
-    /// ラッパー要素判定の幅閾値（親の何割以上か）
-    static let wrapperWidthRatio: CGFloat = 0.9
 }
 
 enum ScrollTarget {
     private static let scrollableRoles: Set<String> = [
-        "AXScrollArea", "AXWebArea", "AXTextArea", "AXList", "AXTable", "AXOutline"
+        "AXScrollArea", "AXTextArea", "AXList", "AXTable", "AXOutline"
     ]
 
     /// フォーカスアプリの AXFocusedUIElement からスクロール可能な祖先を探す
@@ -57,8 +53,8 @@ enum ScrollTarget {
     // MARK: - 全スクロール領域列挙
 
     /// AX ツリーを走査し、スクロール可能な全領域を返す
-    /// - スクロール可能ロールの要素を発見したら子への再帰を止める（ネスト重複防止）
-    /// - minScrollAreaSize 未満の要素はスキップ（ツールバー内の小さな AXList 等を除外）
+    /// - AXWebArea を検出したら WebAreaSplitDetector に委譲してレイアウト分割を検出する
+    /// - 通常のスクロール可能ロールはリーフ優先で収集する
     static func enumerateScrollableElements(root: AXUIElement) -> [ScrollAreaInfo] {
         var result: [ScrollAreaInfo] = []
         collectScrollable(element: root, into: &result, depth: 0)
@@ -72,13 +68,25 @@ enum ScrollTarget {
     ) {
         guard depth < Limits.collectMaxDepth else { return }
 
+        // AXWebArea: WebAreaSplitDetector に委譲してレイアウトベース分割を検出
+        var roleRef: CFTypeRef?
+        if AXUIElementCopyAttributeValue(element, "AXRole" as CFString, &roleRef) == .success,
+           (roleRef as? String) == "AXWebArea",
+           let f = AXAttributes.frame(of: element),
+           f.width >= Limits.minScrollAreaSize,
+           f.height >= Limits.minScrollAreaSize {
+            let areas = WebAreaSplitDetector.detect(webArea: element, nextLabel: result.count + 1)
+            result.append(contentsOf: areas)
+            return
+        }
+
         let frame = AXAttributes.frame(of: element)
         let selfIsScrollable = isScrollable(element: element)
             && frame.map {
                 $0.width >= Limits.minScrollAreaSize && $0.height >= Limits.minScrollAreaSize
             } ?? false
 
-        // 子を先に探索（自身がスクロール可能でも止めない）
+        // 子を先に探索（リーフ優先）
         let countBefore = result.count
         var childrenRef: CFTypeRef?
         if AXUIElementCopyAttributeValue(element, "AXChildren" as CFString, &childrenRef) == .success,
@@ -89,80 +97,11 @@ enum ScrollTarget {
         }
         let childrenAdded = result.count > countBefore
 
-        if selfIsScrollable, let f = frame {
-            if !childrenAdded {
-                // リーフ: そのまま追加
-                let center = CGPoint(x: f.midX, y: f.midY)
-                let label = String(result.count + 1)
-                result.append(ScrollAreaInfo(frame: f, centerPoint: center, label: label))
-            } else {
-                // 補完検出: 子にスクロール領域があるが、カバーされていない分割領域も追加
-                let addedAreas = Array(result[countBefore..<result.count])
-                addComplementRegions(element: element, parentFrame: f, existingAreas: addedAreas, into: &result)
-            }
+        if selfIsScrollable, let f = frame, !childrenAdded {
+            // リーフ: そのまま追加
+            let center = CGPoint(x: f.midX, y: f.midY)
+            let label = String(result.count + 1)
+            result.append(ScrollAreaInfo(frame: f, centerPoint: center, label: label))
         }
     }
-
-    /// スクロール可能な親の中から分割ポイントを見つけ、
-    /// 既存スクロール領域にカバーされていない子領域を追加する
-    private static func addComplementRegions(
-        element: AXUIElement,
-        parentFrame: CGRect,
-        existingAreas: [ScrollAreaInfo],
-        into result: inout [ScrollAreaInfo]
-    ) {
-        let splitChildren = findSplitChildren(element: element, parentFrame: parentFrame, maxDepth: Limits.splitMaxDepth)
-        guard splitChildren.count >= 2 else { return }
-
-        for childFrame in splitChildren {
-            // 既存のスクロール領域の centerPoint がこの子フレーム内に含まれるかチェック
-            let containsExisting = existingAreas.contains { childFrame.contains($0.centerPoint) }
-            if !containsExisting {
-                let center = CGPoint(x: childFrame.midX, y: childFrame.midY)
-                let label = String(result.count + 1)
-                result.append(ScrollAreaInfo(frame: childFrame, centerPoint: center, label: label))
-            }
-        }
-    }
-
-    /// 親と同サイズのラッパーを飛ばしつつ、分割ポイント（複数の子が並ぶレベル）を探す
-    /// 返すのは各子の CGRect（フレーム）のリスト
-    private static func findSplitChildren(
-        element: AXUIElement,
-        parentFrame: CGRect,
-        maxDepth: Int
-    ) -> [CGRect] {
-        guard maxDepth > 0 else { return [] }
-
-        var childrenRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, "AXChildren" as CFString, &childrenRef) == .success,
-              let children = childrenRef as? [AXUIElement] else { return [] }
-
-        // 子のうちサイズが十分なものだけ取得
-        var significantChildren: [(element: AXUIElement, frame: CGRect)] = []
-        for child in children {
-            if let f = AXAttributes.frame(of: child),
-               f.width >= Limits.minScrollAreaSize,
-               f.height >= Limits.minScrollAreaSize {
-                significantChildren.append((child, f))
-            }
-        }
-
-        // 親と同サイズ（幅が wrapperWidthRatio 以上）の子はラッパーとみなしてスキップ
-        let nonWrappers = significantChildren.filter { $0.frame.width < parentFrame.width * Limits.wrapperWidthRatio }
-
-        if nonWrappers.count >= 2 {
-            // 分割ポイント発見
-            return nonWrappers.map { $0.frame }
-        }
-
-        // ラッパー（親と同サイズの子）がある場合、その中を再帰探索
-        for (child, frame) in significantChildren where frame.width >= parentFrame.width * Limits.wrapperWidthRatio {
-            let result = findSplitChildren(element: child, parentFrame: parentFrame, maxDepth: maxDepth - 1)
-            if result.count >= 2 { return result }
-        }
-
-        return []
-    }
-
 }
