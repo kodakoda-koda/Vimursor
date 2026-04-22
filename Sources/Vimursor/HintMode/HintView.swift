@@ -39,6 +39,15 @@ final class HintView: NSView {
         }
     }
 
+    /// ラベルボックスの origin を計算する純粋関数。
+    /// NSWindow 座標系（原点: 左下）で、要素の左端・縦中央にラベルを配置する。
+    static func labelOrigin(elementFrame: CGRect, boxHeight: CGFloat) -> CGPoint {
+        CGPoint(
+            x: elementFrame.minX,
+            y: elementFrame.midY - boxHeight / 2
+        )
+    }
+
     private func drawLabel(hint: UIElementInfo, isMatch: Bool) {
         let label = hint.label
         let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
@@ -53,8 +62,8 @@ final class HintView: NSView {
         let boxWidth = size.width + padding * 2
         let boxHeight = size.height + padding * 2
 
-        // ラベルをUI要素の左上に配置
-        let origin = CGPoint(x: hint.frame.minX, y: hint.frame.maxY)
+        // ラベルをUI要素の左端・縦中央に配置（Vimiumスタイル）
+        let origin = HintView.labelOrigin(elementFrame: hint.frame, boxHeight: boxHeight)
         let boxRect = CGRect(x: origin.x, y: origin.y, width: boxWidth, height: boxHeight)
 
         let cornerRadius = HintLabelLayout.cornerRadius
