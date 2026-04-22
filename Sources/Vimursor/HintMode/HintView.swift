@@ -41,7 +41,7 @@ final class HintView: NSView {
 
     /// ラベルボックスの origin を計算する純粋関数。
     /// NSWindow 座標系（原点: 左下）で、要素の左端・縦中央にラベルを配置する。
-    static func labelOrigin(elementFrame: CGRect, boxHeight: CGFloat) -> CGPoint {
+    nonisolated static func labelOrigin(elementFrame: CGRect, boxHeight: CGFloat) -> CGPoint {
         CGPoint(
             x: elementFrame.minX,
             y: elementFrame.midY - boxHeight / 2
