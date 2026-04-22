@@ -50,4 +50,9 @@ struct ScrollEngineTests {
         let halfPage = abs(Int(ScrollAmount.halfPage(direction: .down).lines))
         #expect(halfPage > step * 3, "半ページは1ステップの3倍以上")
     }
+
+    // scrollToExtreme は CGEvent を直接 post するため、
+    // 単体テストでは ScrollEngine.scroll の既存テストで
+    // ScrollAmount の符号・大きさを検証し、
+    // scrollToExtreme の動作は手動テストで確認する。
 }

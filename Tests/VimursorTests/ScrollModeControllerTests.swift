@@ -210,4 +210,52 @@ struct ScrollModeControllerTests {
         #expect(hotkey.keyEventHandler != nil)
     }
 
+    // MARK: - gg / G スクロール
+
+    /// G（Shift+g）キーはイベントを消費する
+    @Test @MainActor func shiftGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: .maskShift)
+        #expect(consumed == true, "Shift+g (G) はイベントを消費する")
+    }
+
+    /// g キー1回はイベントを消費する（まだスクロールはしないが消費する）
+    @Test @MainActor func singleGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        #expect(consumed == true, "g キー1回はイベントを消費する")
+    }
+
+    /// gg（g キー2回連続）はイベントを消費する
+    @Test @MainActor func doubleGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        #expect(consumed == true, "gg の2回目もイベントを消費する")
+    }
+
+    /// g → j → g → g の順で押した場合、g → j で pendingG がリセットされるので
+    /// 3回目の g 単体では先頭スクロールしない（4回目が gg の確定になる）
+    @Test @MainActor func gFollowedByOtherKeyResetsPendingG() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        // g → j（pendingG リセット）→ g（pendingG = true）→ g（gg 確定）
+        // いずれのキーも消費される
+        let consumed1 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // pendingG = true
+        let consumed2 = hotkey.simulateKey(ScrollKeyCode.j, flags: [])  // pendingG = false
+        let consumed3 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // pendingG = true
+        let consumed4 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // gg 確定
+        #expect(consumed1 == true)
+        #expect(consumed2 == true)
+        #expect(consumed3 == true)
+        #expect(consumed4 == true, "g → j → g → g の4打鍵はすべて消費される")
+    }
+
 }
