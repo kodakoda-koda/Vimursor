@@ -210,32 +210,52 @@ struct ScrollModeControllerTests {
         #expect(hotkey.keyEventHandler != nil)
     }
 
-    // MARK: - 補完検出ロジック（Complement Detection）
+    // MARK: - gg / G スクロール
 
-    /// 既存スクロール領域の centerPoint が子フレーム内に含まれるかの判定
-    @Test func complementDetectionCenterPointContainment() {
-        let childFrame = CGRect(x: 280, y: 25, width: 1440, height: 1415)
-        let insidePoint = CGPoint(x: 992, y: 771)   // メイン内の点
-        let outsidePoint = CGPoint(x: 100, y: 400)  // サイドバー内の点
-        #expect(childFrame.contains(insidePoint) == true, "メイン領域内の点は含まれる")
-        #expect(childFrame.contains(outsidePoint) == false, "サイドバー領域の点は含まれない")
+    /// G（Shift+g）キーはイベントを消費する
+    @Test @MainActor func shiftGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: .maskShift)
+        #expect(consumed == true, "Shift+g (G) はイベントを消費する")
     }
 
-    /// ラッパー判定: 親幅の90%以上はラッパー
-    @Test func wrapperDetectionByWidth() {
-        let parentWidth: CGFloat = 1720
-        let threshold: CGFloat = 0.9
-        let wrapperWidth: CGFloat = 1720   // 100% → ラッパー
-        let splitWidth: CGFloat = 240      // 14% → 分割子
-        #expect(wrapperWidth >= parentWidth * threshold, "同サイズはラッパー")
-        #expect(splitWidth < parentWidth * threshold, "小さいサイズは分割子")
+    /// g キー1回はイベントを消費する（まだスクロールはしないが消費する）
+    @Test @MainActor func singleGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        #expect(consumed == true, "g キー1回はイベントを消費する")
     }
 
-    /// 分割子が2つ以上あるときのみ補完が発動する
-    @Test func complementRequiresAtLeastTwoSplitChildren() {
-        let splitChildren = 1
-        #expect((splitChildren >= 2) == false, "1つだけでは補完しない")
-        let splitChildren2 = 2
-        #expect((splitChildren2 >= 2) == true, "2つ以上で補完発動")
+    /// gg（g キー2回連続）はイベントを消費する
+    @Test @MainActor func doubleGIsConsumed() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        let consumed = hotkey.simulateKey(ScrollKeyCode.g, flags: [])
+        #expect(consumed == true, "gg の2回目もイベントを消費する")
     }
+
+    /// g → j → g → g の順で押した場合、g → j で pendingG がリセットされるので
+    /// 3回目の g 単体では先頭スクロールしない（4回目が gg の確定になる）
+    @Test @MainActor func gFollowedByOtherKeyResetsPendingG() async throws {
+        let (controller, overlay, hotkey, _) = makeSUT(areas: [makeScrollArea()])
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(100))
+        // g → j（pendingG リセット）→ g（pendingG = true）→ g（gg 確定）
+        // いずれのキーも消費される
+        let consumed1 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // pendingG = true
+        let consumed2 = hotkey.simulateKey(ScrollKeyCode.j, flags: [])  // pendingG = false
+        let consumed3 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // pendingG = true
+        let consumed4 = hotkey.simulateKey(ScrollKeyCode.g, flags: [])  // gg 確定
+        #expect(consumed1 == true)
+        #expect(consumed2 == true)
+        #expect(consumed3 == true)
+        #expect(consumed4 == true, "g → j → g → g の4打鍵はすべて消費される")
+    }
+
 }

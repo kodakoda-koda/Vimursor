@@ -1,7 +1,7 @@
 ---
 name: planner
 description: Expert planning and architecture specialist for complex features and refactoring. Use PROACTIVELY when users request feature implementation, architectural changes, or complex refactoring.
-tools: ["Read", "Grep", "Glob"]
+tools: ["Read", "Write", "Edit", "Grep", "Glob"]
 model: opus
 ---
 

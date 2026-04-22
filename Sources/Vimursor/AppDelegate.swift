@@ -108,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let overlay = self.overlayWindow,
                   let hotkey = self.hotkeyManager,
                   hotkey.keyEventHandler == nil else { return }
+            AXManager.enableManualAccessibility()
             self.searchModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         manager.onScrollModeActivated = { [weak self] in
@@ -115,6 +116,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   let overlay = self.overlayWindow,
                   let hotkey = self.hotkeyManager,
                   hotkey.keyEventHandler == nil else { return }
+            AXManager.enableManualAccessibility()
             self.scrollModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         self.hotkeyManager = manager

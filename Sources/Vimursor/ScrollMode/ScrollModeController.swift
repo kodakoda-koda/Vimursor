@@ -14,6 +14,7 @@ enum ScrollKeyCode {
     static let k: CGKeyCode    = 40
     static let d: CGKeyCode    = 2
     static let u: CGKeyCode    = 32
+    static let g: CGKeyCode    = 5
     // 数字 1〜9（US キーボード）
     static let numToIndex: [CGKeyCode: Int] = [
         18: 0, 19: 1, 20: 2, 21: 3, 23: 4,
@@ -53,6 +54,10 @@ final class ScrollModeController {
     private weak var overlayWindow: (any OverlayProviding)?
     private weak var hotkeyManager: (any KeyEventHandling)?
     private let elementFetcher: any ElementFetching
+    /// `g` キーが1回押された状態を保持する（gg 入力のため）
+    private var pendingG: Bool = false
+    /// scrollToExtreme の進行中イベントをキャンセルするためのハンドル
+    private var extremeScrollToken: DispatchWorkItem?
 
     init(elementFetcher: any ElementFetching = AXManager()) {
         self.elementFetcher = elementFetcher
@@ -81,8 +86,8 @@ final class ScrollModeController {
                 // Tab / Shift+Tab は消費
                 shouldConsume = true
             } else if isShift {
-                // Shift 付きその他は消費しない
-                shouldConsume = false
+                // Shift+g (= G) のみ消費、他の Shift 付きは消費しない
+                shouldConsume = (keyCode == ScrollKeyCode.g)
             } else {
                 // 数字キー・スクロールキーのみ消費
                 shouldConsume = ScrollKeyCode.numToIndex[keyCode] != nil
@@ -90,11 +95,18 @@ final class ScrollModeController {
                     || keyCode == ScrollKeyCode.k
                     || keyCode == ScrollKeyCode.d
                     || keyCode == ScrollKeyCode.u
+                    || keyCode == ScrollKeyCode.g
             }
 
             if shouldConsume {
                 Task { @MainActor [weak self] in
                     self?.handleKey(keyCode: keyCode, flags: flags)
+                }
+            } else if self.pendingG {
+                // 非消費キー（Cmd+Tab 等）でも pendingG をリセットし、
+                // 意図しない gg 発火を防ぐ
+                Task { @MainActor [weak self] in
+                    self?.pendingG = false
                 }
             }
             return shouldConsume
@@ -139,6 +151,9 @@ final class ScrollModeController {
 
     func deactivate() {
         state = .inactive
+        pendingG = false
+        extremeScrollToken?.cancel()
+        extremeScrollToken = nil
         scrollAreaView?.removeFromSuperview()
         scrollAreaView = nil
         indicatorView?.removeFromSuperview()
@@ -163,6 +178,33 @@ final class ScrollModeController {
         }
 
         let isShift = flags.contains(.maskShift)
+
+        // G（Shift+g）: ページ末尾へスクロール
+        if keyCode == ScrollKeyCode.g && isShift {
+            pendingG = false
+            extremeScrollToken?.cancel()
+            extremeScrollToken = ScrollEngine.scrollToExtreme(
+                direction: .down, targetPoint: areas[selectedIndex].centerPoint
+            )
+            return
+        }
+
+        // g キー: gg で先頭へスクロール
+        if keyCode == ScrollKeyCode.g {
+            if pendingG {
+                pendingG = false
+                extremeScrollToken?.cancel()
+                extremeScrollToken = ScrollEngine.scrollToExtreme(
+                    direction: .up, targetPoint: areas[selectedIndex].centerPoint
+                )
+            } else {
+                pendingG = true
+            }
+            return
+        }
+
+        // g 以外のキーが押されたら pendingG をリセット
+        pendingG = false
 
         // Tab / Shift+Tab: 領域切り替え（ハンドラ側で Cmd/Ctrl/Alt 付きは除外済み）
         if keyCode == ScrollKeyCode.tab {
