@@ -1,8 +1,8 @@
 # Contributing to Vimursor
 
-## Development Environment Setup
+Thanks for your interest in contributing! Here's how to get started.
 
-### 1. Clone the Repository
+## Development Setup
 
 ```bash
 git clone https://github.com/kodakoda-koda/Vimursor.git
@@ -11,32 +11,20 @@ git checkout develop
 swift build
 ```
 
-### 2. Accessibility Permission Setup
+### Accessibility Permission
 
-Vimursor uses the macOS Accessibility API, so accessibility permission is required on the first launch.
+Vimursor uses the macOS Accessibility API. On first launch:
 
-1. Run `.build/debug/Vimursor` — a permission dialog will appear
+1. Run `.build/debug/Vimursor`
 2. Open "System Settings" → "Privacy & Security" → "Accessibility"
-3. Enable `Vimursor` or Terminal (if running via `swift run`)
-4. Restart the app after granting permission
+3. Enable `Vimursor` or Terminal
+4. Restart the app
 
-The app can still launch without permission, but AXUIElement operations (element enumeration and clicking) will fail.
-
-### 3. Build Commands
-
-```bash
-swift build                        # Debug build
-swift build -c release             # Release build
-swift test                         # Run tests
-swift test --enable-code-coverage  # Run tests with coverage
-.build/debug/Vimursor              # Run debug build
-```
+Without permission, UI element operations will fail.
 
 ---
 
-## Architecture Overview
-
-### Directory Structure
+## Architecture
 
 ```
 Sources/Vimursor/
@@ -50,219 +38,59 @@ Sources/Vimursor/
 └── ScrollMode/              # Scroll mode control
 ```
 
-### Module Responsibilities
-
-| Module | Responsibility |
-|--------|----------------|
-| `AppDelegate` | Permission check on launch, menu bar icon management |
-| `HotkeyManager` | Captures global key events via `CGEventTap` and activates each mode |
-| `Accessibility/AXManager` | Enumerates clickable and searchable elements via `AXUIElement`, performs clicks |
-| `Overlay/LabelGenerator` | Generates label strings (`a`, `b`, ..., `aa`, `ab`, ...) based on element count |
-| `Overlay/OverlayWindow` | Creates and positions overlay windows using `NSPanel` |
-| `HintMode/HintModeController` | Manages hint mode state (start → label display → key input → click → exit) |
-| `SearchMode/SearchModeController` | Manages search mode state, text filtering (pure functions) |
-| `ScrollMode/` | Manages scroll mode state, detects scrollable regions |
-
-### Processing Flow (Hint Mode)
-
-```
-Cmd+Shift+Space
-  → HotkeyManager
-  → HintModeController.start()
-  → AXManager.fetchClickableElements()
-  → LabelGenerator.generate(count:)
-  → OverlayWindow + HintView (label rendering)
-  → Key input for filtering
-  → Exact match → AXUIElementPerformAction("AXPress")
-  → Close overlay
-```
-
 ---
 
-## Code Style Guidelines
+## Making Changes
 
-Key rules are listed below.
+1. Create a branch from `develop`
+   ```bash
+   git checkout develop
+   git checkout -b feature/my-change
+   ```
 
-### Prefer Immutability
+2. Make your changes and add tests where applicable
+   ```bash
+   swift build   # Verify build
+   swift test    # Run tests
+   ```
+   Code style is enforced by [SwiftLint](https://github.com/realm/SwiftLint) in CI. You can run it locally with `swiftlint lint`.
 
-- Use `struct` (value types) over `class`
-- Use `let` over `var`
+3. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
+   ```bash
+   git commit -m "feat: add my feature"
+   ```
 
-```swift
-// Preferred
-struct Config {
-    let labels: [String]
-}
+4. Push and open a PR targeting `develop`
+   ```bash
+   git push -u origin feature/my-change
+   ```
 
-// Not preferred
-class Config {
-    var labels: [String] = []
-}
-```
+### Testing
 
-### File and Function Size
+- PRs should include tests for new features and bug fixes
+- Use **Swift Testing** (`import Testing`, `@Test`, `#expect`)
+- UI/system-dependent code (`NSPanel`, `CGEventTap`) can be tested manually
 
-- Functions should be **50 lines or fewer**
-- Files should typically be **200–400 lines**, with a **hard limit of 800 lines**
-- Split files by feature or responsibility when they grow too large
+### Commit Types
 
-### Error Handling
-
-- Always check `AXError` returned by `AXUIElement`
-- Force unwrapping (`!`) is prohibited — use `guard let` / `if let`
-- Silent failures (swallowing errors) are prohibited
-
-### Other
-
-- Group constants such as key codes at the top of the file (no magic numbers)
-- All UI operations must run on `DispatchQueue.main.async`
-- Use `[weak self]` in delegates and closures to prevent retain cycles
-
----
-
-## Testing
-
-PRs should include tests for new features and bug fixes.
-
-```bash
-swift test                         # Run tests
-swift test --enable-code-coverage  # Run tests with coverage
-```
-
-### Test Classification
-
-| Target | Approach |
-|--------|----------|
-| Pure logic (`LabelGenerator`, `SearchModeController.filter`, etc.) | Unit tests with Swift Testing |
-| `AXUIElement` calls | Wrap with protocol and substitute a mock |
-| `NSPanel` / `CGEventTap` | Manual testing (system-dependent) |
-
-### Test Framework
-
-Use **Swift Testing**, not `XCTest`.
-
-```swift
-import Testing
-@testable import Vimursor
-
-@Suite("LabelGenerator Tests")
-struct LabelGeneratorTests {
-    @Test("generates correct count of labels")
-    func generatesCorrectCount() {
-        let labels = LabelGenerator.generate(count: 5)
-        #expect(labels.count == 5)
-    }
-}
-```
-
-### Coverage Target
-
-Aim for **80% or above**.
-
----
-
-## Issue Management
-
-Development is driven by GitHub Issues.
-
-| Label | Purpose | Example Title |
-|-------|---------|---------------|
-| `epic` | Feature group / milestone | `[Epic 3] Distribution Infrastructure` |
-| `task` | Individual implementation task (child of Epic) | `[3-1] Create .app bundle` |
-| `memo` | Technical knowledge / research notes | `[memo] AX coordinate system conversion` |
-| `bug` | Bug report | `[bug] Hint labels not displayed` |
-| `enhancement` | Feature request | `[request] Dark mode support` |
-
-Link the corresponding Issue number to each PR.
-
----
-
-## Branch Strategy
-
-```
-main           ── Stable released version
-  └─ develop   ── Development integration branch
-       ├─ feature/epic<N>-<name>  ── Feature branch (per Epic)
-       ├─ fix/<name>              ── Bug fix branch
-       └─ docs/<name>             ── Documentation branch
-```
-
-### Standard Development Flow (feature → develop)
-
-```bash
-# 1. Create a working branch from develop
-git checkout develop
-git checkout -b feature/epic3-distribution
-
-# 2. Implement and commit
-git commit -m "feat: Add my feature"
-
-# 3. Open a PR to develop
-git push -u origin feature/epic3-distribution
-# Create PR on GitHub → Review → Squash merge
-```
-
-### Release Flow (develop → release → main)
-
-```bash
-# 1. Create a release branch from develop
-git checkout develop
-git checkout -b release/v1.0
-
-# 2. Open a PR from release to main
-git push -u origin release/v1.0
-# Create PR on GitHub → Review → Squash merge
-
-# 3. Tag main
-git checkout main
-git pull
-git tag v1.0
-git push origin v1.0
-```
-
----
-
-## Commit Messages
-
-```
-<type>: <description>
-```
-
-| type | Purpose |
+| Type | Purpose |
 |------|---------|
 | `feat` | New feature |
 | `fix` | Bug fix |
 | `refactor` | Refactoring |
-| `docs` | Documentation-only changes |
-| `test` | Adding or updating tests |
-| `chore` | Build configuration, tooling, etc. |
-| `perf` | Performance improvement |
+| `docs` | Documentation |
+| `test` | Tests |
+| `chore` | Build, tooling |
 
 ---
 
-## PR Guidelines
+## Reporting Issues
 
-### PR Scope
+- **Bugs**: Use the [Bug Report](https://github.com/kodakoda-koda/Vimursor/issues/new/choose) template
+- **Feature ideas**: Open a [Discussion](https://github.com/kodakoda-koda/Vimursor/discussions/new?category=ideas)
 
-- **PRs are grouped per Epic** (not per individual task)
-- `feature/**` / `fix/**` / `docs/**` → PR targets `develop`
-- `release/**` → PR targets `main`
+---
 
-### Merge Strategy
+## License
 
-All PRs are merged via **squash merge**.
-
-### PR Title and Body
-
-- Title follows the same format as commit messages (`feat: ...`)
-- List the related Issues in the body using `Closes #XX` (auto-closed after squash merge)
-- Include the Epic Issue itself in the `Closes #N` list
-
-### PR Template Selection
-
-| Use case | Template | How to use |
-|----------|----------|------------|
-| Targeting `develop` (standard development) | `develop.md` | Self-review checklist, test plan |
-| Targeting `main` (release) | `release.md` | Version info, release notes, release checklist |
-
-When creating a PR, GitHub will show a template selection screen. Choose the appropriate template for your PR target.
+By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).

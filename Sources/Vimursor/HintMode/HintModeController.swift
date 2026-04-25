@@ -103,14 +103,13 @@ final class HintModeController {
 
         guard case .active(let hints, let input) = state else { return }
 
-        // ESC
         if keyCode == KeyCodeMapping.escapeKeyCode {
             deactivate()
             return
         }
 
         // 修飾キー付きは無視（Cmd+Tab等）
-        guard flags.intersection([.maskCommand, .maskControl, .maskAlternate]).isEmpty else { return }
+        guard flags.isDisjoint(with: [.maskCommand, .maskControl, .maskAlternate]) else { return }
 
         guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 
@@ -123,37 +122,48 @@ final class HintModeController {
         }
 
         if let exact = matches.first(where: { $0.label == newInput }) {
-            let frame = exact.frame
-            if settings.isContinuousMode {
-                enterRestartingState()
-                Task { @MainActor [weak self] in
-                    do {
-                        try await Task.sleep(for: .seconds(Self.clickDelay))
-                    } catch is CancellationError {
-                        return
-                    }
-                    guard let self else { return }
-                    guard case .restarting = self.state else { return }  // ESCでdeactivateされていたら中断
-                    self.elementFetcher.clickAt(frame: frame)
-                    self.scheduleReactivation()
-                }
-            } else {
-                // 単発モード: オーバーレイ非表示後にクリック送信（連続モードの enterRestartingState と同等の順序）
-                deactivate()
-                Task { @MainActor [weak self] in
-                    do {
-                        try await Task.sleep(for: .seconds(Self.clickDelay))
-                    } catch is CancellationError {
-                        return
-                    }
-                    self?.elementFetcher.clickAt(frame: frame)
-                }
-            }
+            performClick(frame: exact.frame)
             return
         }
 
         state = .active(hints: hints, input: newInput)
         hintView?.update(hints: hints, inputPrefix: newInput)
+    }
+
+    private func performClick(frame: CGRect) {
+        if settings.isContinuousMode {
+            performContinuousClick(frame: frame)
+        } else {
+            performSingleClick(frame: frame)
+        }
+    }
+
+    private func performContinuousClick(frame: CGRect) {
+        enterRestartingState()
+        Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(Self.clickDelay))
+            } catch is CancellationError {
+                return
+            }
+            guard let self else { return }
+            guard case .restarting = self.state else { return }  // ESCでdeactivateされていたら中断
+            self.elementFetcher.clickAt(frame: frame)
+            self.scheduleReactivation()
+        }
+    }
+
+    private func performSingleClick(frame: CGRect) {
+        // 単発モード: オーバーレイ非表示後にクリック送信
+        deactivate()
+        Task { @MainActor [weak self] in
+            do {
+                try await Task.sleep(for: .seconds(Self.clickDelay))
+            } catch is CancellationError {
+                return
+            }
+            self?.elementFetcher.clickAt(frame: frame)
+        }
     }
 
     private func enterRestartingState() {
