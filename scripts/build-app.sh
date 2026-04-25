@@ -12,10 +12,10 @@ MACOS_DIR="${CONTENTS}/MacOS"
 RESOURCES_DIR="${CONTENTS}/Resources"
 INFO_PLIST_SRC="${REPO_ROOT}/Sources/Vimursor/Info.plist"
 
-echo "==> Building release binary..."
+echo "==> Building universal release binary..."
 cd "${REPO_ROOT}"
-swift build -c release
-BIN_PATH="$(swift build -c release --show-bin-path)"
+swift build -c release --arch arm64 --arch x86_64
+BIN_PATH="$(swift build -c release --arch arm64 --arch x86_64 --show-bin-path)"
 BINARY_SRC="${BIN_PATH}/${APP_NAME}"
 
 echo "==> Assembling ${APP_NAME}.app bundle..."
