@@ -20,7 +20,7 @@ type_body_length:
   error: 600
 
 identifier_name:
-  min_length: 2
+  min_length: 1
 
 opt_in_rules:
   - force_unwrapping

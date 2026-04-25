@@ -171,7 +171,6 @@ final class ScrollModeController {
 
         guard case .active(let areas, let selectedIndex) = state else { return }
 
-        // ESC: 終了（修飾キーに関わらず常に有効）
         if keyCode == ScrollKeyCode.esc {
             deactivate()
             return
@@ -179,50 +178,56 @@ final class ScrollModeController {
 
         let isShift = flags.contains(.maskShift)
 
-        // G（Shift+g）: ページ末尾へスクロール
-        if keyCode == ScrollKeyCode.g && isShift {
-            pendingG = false
-            extremeScrollToken?.cancel()
-            extremeScrollToken = ScrollEngine.scrollToExtreme(
-                direction: .down, targetPoint: areas[selectedIndex].centerPoint
-            )
-            return
-        }
-
-        // g キー: gg で先頭へスクロール
         if keyCode == ScrollKeyCode.g {
-            if pendingG {
-                pendingG = false
-                extremeScrollToken?.cancel()
-                extremeScrollToken = ScrollEngine.scrollToExtreme(
-                    direction: .up, targetPoint: areas[selectedIndex].centerPoint
-                )
-            } else {
-                pendingG = true
-            }
+            handleGKey(isShift: isShift, areas: areas, selectedIndex: selectedIndex)
             return
         }
 
         // g 以外のキーが押されたら pendingG をリセット
         pendingG = false
 
-        // Tab / Shift+Tab: 領域切り替え（ハンドラ側で Cmd/Ctrl/Alt 付きは除外済み）
         if keyCode == ScrollKeyCode.tab {
-            let next = isShift
-                ? (selectedIndex - 1 + areas.count) % areas.count  // Shift+Tab: 逆順
-                : (selectedIndex + 1) % areas.count                 // Tab: 順送り
-            selectArea(index: next, areas: areas)
+            handleTabKey(isShift: isShift, areas: areas, selectedIndex: selectedIndex)
             return
         }
 
-        // 数字キー: 領域選択
-        if let index = ScrollKeyCode.numToIndex[keyCode], index < areas.count {
-            selectArea(index: index, areas: areas)
-            return
-        }
+        if handleNumberKey(keyCode: keyCode, areas: areas) { return }
 
-        // スクロールキー
+        handleScrollKey(keyCode: keyCode, targetPoint: areas[selectedIndex].centerPoint)
+    }
+
+    private func handleGKey(isShift: Bool, areas: [ScrollAreaInfo], selectedIndex: Int) {
         let targetPoint = areas[selectedIndex].centerPoint
+        if isShift {
+            // G（Shift+g）: ページ末尾へスクロール
+            pendingG = false
+            extremeScrollToken?.cancel()
+            extremeScrollToken = ScrollEngine.scrollToExtreme(direction: .down, targetPoint: targetPoint)
+        } else if pendingG {
+            // gg: ページ先頭へスクロール
+            pendingG = false
+            extremeScrollToken?.cancel()
+            extremeScrollToken = ScrollEngine.scrollToExtreme(direction: .up, targetPoint: targetPoint)
+        } else {
+            pendingG = true
+        }
+    }
+
+    private func handleTabKey(isShift: Bool, areas: [ScrollAreaInfo], selectedIndex: Int) {
+        let next = isShift
+            ? (selectedIndex - 1 + areas.count) % areas.count  // Shift+Tab: 逆順
+            : (selectedIndex + 1) % areas.count                 // Tab: 順送り
+        selectArea(index: next, areas: areas)
+    }
+
+    /// 数字キーによる領域選択。消費した場合 true を返す。
+    private func handleNumberKey(keyCode: CGKeyCode, areas: [ScrollAreaInfo]) -> Bool {
+        guard let index = ScrollKeyCode.numToIndex[keyCode], index < areas.count else { return false }
+        selectArea(index: index, areas: areas)
+        return true
+    }
+
+    private func handleScrollKey(keyCode: CGKeyCode, targetPoint: CGPoint) {
         switch keyCode {
         case ScrollKeyCode.j:
             ScrollEngine.scroll(amount: .step(direction: .down), targetPoint: targetPoint)
