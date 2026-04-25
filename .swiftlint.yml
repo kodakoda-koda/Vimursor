@@ -1,6 +1,7 @@
 excluded:
   - .build
   - Tests
+  - scripts
 
 line_length:
   warning: 200
@@ -17,6 +18,9 @@ function_body_length:
 type_body_length:
   warning: 400
   error: 600
+
+identifier_name:
+  min_length: 2
 
 opt_in_rules:
   - force_unwrapping

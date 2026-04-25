@@ -108,56 +108,64 @@ final class AppearanceSettingsView: NSView {
         ]
 
         for (index, row) in rows.enumerated() {
-            let label = makeLabel(row.label)
-
-            label.translatesAutoresizingMaskIntoConstraints = false
-            addSubview(label)
-
             let yOffset = Layout.margin + CGFloat(rows.count - 1 - index) * (Layout.rowHeight + Layout.rowSpacing)
+            addLabeledRow(title: row.label, controls: row.controls, yOffset: yOffset)
+        }
+    }
 
+    private func addLabeledRow(title: String, controls: [NSView], yOffset: CGFloat) {
+        let label = makeLabel(title)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.margin),
+            label.widthAnchor.constraint(equalToConstant: Layout.labelWidth),
+            label.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
+        ])
+
+        var xOffset = Layout.margin + Layout.labelWidth + 8
+        for control in controls {
+            control.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(control)
+            xOffset += applyConstraints(to: control, xOffset: xOffset, yOffset: yOffset)
+        }
+    }
+
+    /// コントロールにレイアウト制約を適用し、次のコントロールまでの水平オフセットを返す。
+    @discardableResult
+    private func applyConstraints(to control: NSView, xOffset: CGFloat, yOffset: CGFloat) -> CGFloat {
+        let centerY = yOffset + Layout.rowHeight / 2
+        switch control {
+        case let colorWell as NSColorWell:
             NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.margin),
-                label.widthAnchor.constraint(equalToConstant: Layout.labelWidth),
-                label.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
+                colorWell.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                colorWell.widthAnchor.constraint(equalToConstant: Layout.colorWellWidth),
+                colorWell.heightAnchor.constraint(equalToConstant: Layout.colorWellHeight),
+                colorWell.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
             ])
-
-            var xOffset = Layout.margin + Layout.labelWidth + 8
-            for control in row.controls {
-                control.translatesAutoresizingMaskIntoConstraints = false
-                addSubview(control)
-
-                switch control {
-                case let cw as NSColorWell:
-                    NSLayoutConstraint.activate([
-                        cw.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        cw.widthAnchor.constraint(equalToConstant: Layout.colorWellWidth),
-                        cw.heightAnchor.constraint(equalToConstant: Layout.colorWellHeight),
-                        cw.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
-                    ])
-                    xOffset += Layout.colorWellWidth + 4
-                case let slider as NSSlider:
-                    NSLayoutConstraint.activate([
-                        slider.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        slider.widthAnchor.constraint(equalToConstant: 140),
-                        slider.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
-                    ])
-                    xOffset += 144
-                case let stepper as NSStepper:
-                    NSLayoutConstraint.activate([
-                        stepper.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        stepper.widthAnchor.constraint(equalToConstant: Layout.stepperWidth),
-                        stepper.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
-                    ])
-                    xOffset += Layout.stepperWidth + 4
-                default:
-                    NSLayoutConstraint.activate([
-                        control.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        control.widthAnchor.constraint(equalToConstant: Layout.valueFieldWidth),
-                        control.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
-                    ])
-                    xOffset += Layout.valueFieldWidth + 4
-                }
-            }
+            return Layout.colorWellWidth + 4
+        case let slider as NSSlider:
+            NSLayoutConstraint.activate([
+                slider.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                slider.widthAnchor.constraint(equalToConstant: 140),
+                slider.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return 144
+        case let stepper as NSStepper:
+            NSLayoutConstraint.activate([
+                stepper.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                stepper.widthAnchor.constraint(equalToConstant: Layout.stepperWidth),
+                stepper.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return Layout.stepperWidth + 4
+        default:
+            NSLayoutConstraint.activate([
+                control.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                control.widthAnchor.constraint(equalToConstant: Layout.valueFieldWidth),
+                control.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return Layout.valueFieldWidth + 4
         }
     }
 

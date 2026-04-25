@@ -113,8 +113,18 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func configureMenu() {
         let menu = NSMenu()
+        addModeItems(to: menu)
+        menu.addItem(.separator())
+        addAppItems(to: menu)
+        menu.addItem(.separator())
+        addPreferenceItems(to: menu)
+        menu.addItem(.separator())
+        addQuitItem(to: menu)
+        menu.delegate = self
+        statusItem.menu = menu
+    }
 
-        // ── モード起動 ──────────────────────────────
+    private func addModeItems(to menu: NSMenu) {
         let hintItem = NSMenuItem(
             title: "Hint Mode",
             action: #selector(activateHintMode),
@@ -144,10 +154,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         scrollItem.tag = MenuItemTag.scrollMode
         scrollItem.setShortcut(for: .scrollMode)
         menu.addItem(scrollItem)
+    }
 
-        menu.addItem(.separator())
-
-        // ── Settings ──────────────────────────────
+    private func addAppItems(to menu: NSMenu) {
         let settingsItem = NSMenuItem(
             title: "Settings...",
             action: #selector(openSettings),
@@ -158,7 +167,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         settingsItem.isEnabled = (onSettings != nil)
         menu.addItem(settingsItem)
 
-        // ── About ─────────────────────────────────
         let aboutItem = NSMenuItem(
             title: "About Vimursor",
             action: #selector(showAbout),
@@ -166,10 +174,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         )
         aboutItem.target = self
         menu.addItem(aboutItem)
+    }
 
-        menu.addItem(.separator())
-
-        // ── Continuous Hint Mode ─────────────────
+    private func addPreferenceItems(to menu: NSMenu) {
         let continuousItem = NSMenuItem(
             title: "Continuous Hint Mode",
             action: #selector(toggleContinuousHintMode),
@@ -179,7 +186,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         continuousItem.tag = MenuItemTag.continuousHintMode
         menu.addItem(continuousItem)
 
-        // ── Launch at Login ───────────────────────
         let launchAtLoginItem = NSMenuItem(
             title: "Launch at Login",
             action: #selector(toggleLaunchAtLogin),
@@ -188,10 +194,9 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         launchAtLoginItem.target = self
         launchAtLoginItem.tag = MenuItemTag.launchAtLogin
         menu.addItem(launchAtLoginItem)
+    }
 
-        menu.addItem(.separator())
-
-        // ── Quit ──────────────────────────────────
+    private func addQuitItem(to menu: NSMenu) {
         let quitItem = NSMenuItem(
             title: "Quit Vimursor",
             action: #selector(quitApp),
@@ -200,9 +205,6 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         quitItem.keyEquivalentModifierMask = [.command]
         quitItem.target = self
         menu.addItem(quitItem)
-
-        menu.delegate = self
-        statusItem.menu = menu
     }
 
     // MARK: - NSMenuDelegate
