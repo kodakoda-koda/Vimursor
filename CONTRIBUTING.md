@@ -7,7 +7,7 @@ Thanks for your interest in contributing! Here's how to get started.
 ```bash
 git clone https://github.com/kodakoda-koda/Vimursor.git
 cd Vimursor
-git checkout develop
+git checkout main
 swift build
 ```
 
@@ -42,9 +42,9 @@ Sources/Vimursor/
 
 ## Making Changes
 
-1. Create a branch from `develop`
+1. Create a branch from `main`
    ```bash
-   git checkout develop
+   git checkout main
    git checkout -b feature/my-change
    ```
 
@@ -60,7 +60,7 @@ Sources/Vimursor/
    git commit -m "feat: add my feature"
    ```
 
-4. Push and open a PR targeting `develop`
+4. Push and open a PR targeting `main`
    ```bash
    git push -u origin feature/my-change
    ```
