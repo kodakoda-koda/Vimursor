@@ -1,6 +1,6 @@
 # Vimursor
 
-An open-source tool for controlling macOS entirely with the keyboard. Leveraging the Accessibility API, it allows you to click UI elements and scroll through pages without ever touching the mouse.
+Navigate macOS with Vim-style commands. Vimursor brings Vim's philosophy — **keep your hands on the home row** — to the entire operating system, letting you click, search, and scroll any UI element without touching the mouse.
 
 Not available on the App Store (distributed outside the sandbox due to Accessibility API requirements).
 
@@ -15,33 +15,39 @@ Not available on the App Store (distributed outside the sandbox due to Accessibi
 
 | Shortcut | Feature |
 |----------|---------|
-| `Cmd+Shift+Space` | **Hint Mode** — Overlays labels on all clickable elements; press the corresponding keys to click |
-| `Cmd+Shift+/` | **Search Mode** — Filter elements by typing text, then press Enter to click |
-| `Cmd+Shift+J` | **Scroll Mode** — Scroll with keyboard keys |
+| `Cmd+Shift+Space` | **Hint Mode** — Jump to any clickable element with labels, inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion) |
+| `Cmd+Shift+/` | **Search Mode** — Find elements by text, like Vim's `/` search |
+| `Cmd+Shift+J` | **Scroll Mode** — Scroll with `j`/`k`/`u`/`d`, just like Vim |
 
 Shortcuts can be changed via the menu bar icon → "Preferences...".
 
-### Hint Mode
+### Hint Mode — EasyMotion for macOS
 
 <!-- TODO: Add GIF demonstrating hint mode -->
+
+Inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion). Labels appear on every clickable element — type the label to jump there instantly.
 
 1. Press `Cmd+Shift+Space` to display labels (`A`, `B`, `SA`, etc.) on all clickable elements
 2. Type the keys shown on the label (e.g., press `S` then `A`)
 3. The corresponding element is clicked automatically and Hint Mode exits
 4. Press `ESC` to cancel
 
-### Search Mode
+### Search Mode — Vim `/` Search
 
 <!-- TODO: Add GIF demonstrating search mode -->
+
+Like Vim's `/` command, search for elements by text and jump to them.
 
 1. Press `Cmd+Shift+/` to open a search bar at the bottom of the screen
 2. Type text to filter and narrow down the target element
 3. Press `Enter` to click the first match
 4. Press `ESC` to cancel
 
-### Scroll Mode
+### Scroll Mode — Vim-style Scrolling
 
 <!-- TODO: Add GIF demonstrating scroll mode -->
+
+Scroll any window using familiar Vim motions.
 
 1. Press `Cmd+Shift+J` to enter Scroll Mode
 2. Use the following keys to scroll:
