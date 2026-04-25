@@ -74,7 +74,14 @@ Scroll any window using familiar Vim motions.
 
 ## Installation
 
-### Download from GitHub Releases (recommended)
+### Homebrew (recommended)
+
+```bash
+brew tap kodakoda-koda/vimursor
+brew install --cask vimursor
+```
+
+### Download from GitHub Releases
 
 1. Download the latest `Vimursor.dmg` from the [Releases page](https://github.com/kodakoda-koda/Vimursor/releases)
 2. Open the DMG and drag `Vimursor.app` to the `/Applications` folder
