@@ -131,7 +131,8 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
         guard FileManager.default.fileExists(atPath: path1x),
               let sourceImage1x = NSImage(contentsOfFile: path1x),
-              let rep1x = sourceImage1x.representations.first as? NSBitmapImageRep
+              let rep1x = sourceImage1x.representations.first as? NSBitmapImageRep,
+              let rep1xCopy = rep1x.copy() as? NSBitmapImageRep
         else {
             logger.debug("MenuBarIcon.png が Bundle に見つかりません（デバッグビルド等では正常）")
             return nil
@@ -141,15 +142,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         let icon = NSImage(size: targetSize)
 
         // @1x 表現を追加（scale = 1.0 相当）
-        rep1x.size = targetSize
-        icon.addRepresentation(rep1x)
+        rep1xCopy.size = targetSize
+        icon.addRepresentation(rep1xCopy)
 
         // @2x 表現が存在すれば追加
         if FileManager.default.fileExists(atPath: path2x),
            let sourceImage2x = NSImage(contentsOfFile: path2x),
-           let rep2x = sourceImage2x.representations.first as? NSBitmapImageRep {
-            rep2x.size = targetSize
-            icon.addRepresentation(rep2x)
+           let rep2x = sourceImage2x.representations.first as? NSBitmapImageRep,
+           let rep2xCopy = rep2x.copy() as? NSBitmapImageRep {
+            rep2xCopy.size = targetSize
+            icon.addRepresentation(rep2xCopy)
         }
 
         icon.size = targetSize

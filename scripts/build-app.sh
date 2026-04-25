@@ -47,12 +47,15 @@ fi
 
 # Inject version from git tag (e.g., v1.0.0 → 1.0.0)
 VERSION="${VIMURSOR_VERSION:-$(git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo "0.9.0")}"
+VERSION=$(echo "${VERSION}" | grep -Eo '^[0-9]+\.[0-9]+\.[0-9]+' || echo "0.9.0")
 /usr/libexec/PlistBuddy -c "Set :CFBundleVersion ${VERSION}" "${CONTENTS}/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString ${VERSION}" "${CONTENTS}/Info.plist"
 
 echo "==> Signing bundle (ad-hoc)..."
 xattr -cr "${APP_BUNDLE}"
-codesign -s - -f --deep "${APP_BUNDLE}"
+codesign -s - -f --deep \
+  --entitlements "${REPO_ROOT}/Sources/Vimursor/Vimursor.entitlements" \
+  "${APP_BUNDLE}"
 
 echo "==> Validating bundle..."
 plutil -lint "${CONTENTS}/Info.plist"

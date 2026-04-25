@@ -80,6 +80,7 @@ func parseSVGPath(_ d: String) -> NSBezierPath {
                 path.line(to: NSPoint(x: x, y: y))
                 curX = x; curY = y
             }
+        // H/V: only single argument supported (no implicit repetition)
         case "H":
             let x = nextNum()
             path.line(to: NSPoint(x: x, y: curY))
@@ -90,6 +91,8 @@ func parseSVGPath(_ d: String) -> NSBezierPath {
             curY = y
         case "Z", "z":
             path.close()
+        // Note: lowercase (relative) commands (m, l, h, v) are not supported.
+        // All path data in this file uses uppercase (absolute) commands only.
         default:
             break
         }
@@ -464,7 +467,7 @@ try FileManager.default.createDirectory(atPath: resourcesDir, withIntermediateDi
 
 // アプリアイコンプレビュー (既存)
 print("Rendering app icon preview...")
-let preview = drawIcon(size: 1024)
+let preview = drawIcon(size: canvasSize)
 try savePNG(preview, to: "\(resourcesDir)/AppIcon-preview.png")
 
 // メニューバーアイコンプレビュー (既存)
@@ -478,10 +481,10 @@ try generateIcns(outputPath: "\(resourcesDir)/AppIcon.icns")
 
 // メニューバー PNG (@1x / @2x)
 print("Rendering menu bar icons...")
-let menuIcon1x = drawMenuBarIcon(size: 16)
+let menuIcon1x = drawMenuBarIcon(size: 18)
 try savePNG(menuIcon1x, to: "\(resourcesDir)/MenuBarIcon.png")
 
-let menuIcon2x = drawMenuBarIcon(size: 32)
+let menuIcon2x = drawMenuBarIcon(size: 36)
 try savePNG(menuIcon2x, to: "\(resourcesDir)/MenuBarIcon@2x.png")
 
 print("Done!")
