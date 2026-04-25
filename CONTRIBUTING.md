@@ -50,9 +50,10 @@ Sources/Vimursor/
 
 2. Make your changes and add tests where applicable
    ```bash
-   swift test    # Run tests
    swift build   # Verify build
+   swift test    # Run tests
    ```
+   Code style is enforced by [SwiftLint](https://github.com/realm/SwiftLint) in CI. You can run it locally with `swiftlint lint`.
 
 3. Commit using [Conventional Commits](https://www.conventionalcommits.org/)
    ```bash
