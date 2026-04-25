@@ -1,22 +1,22 @@
-## 概要
+## Summary
 
-<!-- このPRで何をしたかを簡潔に説明してください -->
+<!-- Briefly describe what this PR does -->
 
-## 変更内容
+## Changes
 
 -
 -
 
-## 関連 Issue
+## Related Issues
 
 <!-- Closes #xxx -->
 
-## テスト
+## Testing
 
-- [ ] `swift build` が通ることを確認した
-- [ ] `swift test` が通ることを確認した
-- [ ] 手動動作確認済み
+- [ ] `swift build` passes
+- [ ] `swift test` passes
+- [ ] Manual testing completed
 
-## チェックリスト
+## Checklist
 
-- [ ] コミットメッセージが規則に従っている
+- [ ] Commit messages follow the convention

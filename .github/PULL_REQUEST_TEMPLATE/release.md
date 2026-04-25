@@ -1,21 +1,21 @@
-## バージョン情報
+## Version
 
-- リリースバージョン: <!-- 例: v1.0.0 -->
+- Release version: <!-- e.g., v1.0.0 -->
 
-## 変更概要
+## Changes
 
-<!-- このリリースに含まれる主な変更を箇条書きで記載してください -->
+<!-- List the major changes included in this release -->
 
 -
 -
 
-## リリースチェックリスト
+## Release Checklist
 
-- [ ] `swift build -c release` が通ることを確認した
-- [ ] `swift test` が通ることを確認した
-- [ ] 全モード（ヒント/検索/スクロール）の手動動作確認済み
-- [ ] バージョン番号が適切に設定されている
+- [ ] `swift build -c release` passes
+- [ ] `swift test` passes
+- [ ] All modes (Hint / Search / Scroll) manually verified
+- [ ] Version number is set correctly
 
-## 既知の問題
+## Known Issues
 
-<!-- 任意: 既知の問題があれば記載してください -->
+<!-- Optional: list any known issues -->

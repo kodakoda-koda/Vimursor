@@ -1,16 +1,16 @@
 ---
 name: Feature Request
-about: 新機能・改善の提案
+about: Suggest a new feature or improvement
 title: '[request] '
 labels: enhancement
 ---
 
-## 概要
+## Overview
 
-## モチベーション
+## Motivation
 
-## 想定する動作
+## Expected Behavior
 
-## 代替案 (Alternatives)
+## Alternatives
 
-<!-- 他に検討した方法があれば記載してください -->
+<!-- Describe any alternative approaches you've considered -->

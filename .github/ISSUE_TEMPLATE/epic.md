@@ -1,14 +1,14 @@
 ---
 name: Epic
-about: 大きな機能グループ・マイルストーン
+about: A group of related features or a milestone
 title: '[Epic N] '
 labels: epic
 ---
 
-## 概要
+## Overview
 
-## 子 Issue
+## Child Issues
 
 - [ ]
 
-## 完了条件
+## Acceptance Criteria

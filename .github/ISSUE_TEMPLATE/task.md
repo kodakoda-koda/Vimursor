@@ -1,18 +1,18 @@
 ---
 name: Task
-about: 個別の実装タスク
+about: An individual implementation task
 title: '[N-M] '
 labels: task
 ---
 
-## 背景
+## Background
 
-## 完了条件
+## Acceptance Criteria
 
-## 実装ファイル
+## Files to Change
 
-## 設計判断・技術的注意点
+## Design Decisions / Technical Notes
 
-## 関連
+## Related
 - Epic: #
 - PR: #

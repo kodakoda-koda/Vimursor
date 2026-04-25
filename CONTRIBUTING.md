@@ -1,8 +1,8 @@
 # Contributing to Vimursor
 
-## 開発環境セットアップ
+## Development Environment Setup
 
-### 1. リポジトリのクローン
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/kodakoda-koda/Vimursor.git
@@ -11,59 +11,59 @@ git checkout develop
 swift build
 ```
 
-### 2. Accessibility 権限の設定
+### 2. Accessibility Permission Setup
 
-Vimursor は macOS の Accessibility API を使用するため、初回起動時にアクセシビリティ権限が必要です。
+Vimursor uses the macOS Accessibility API, so accessibility permission is required on the first launch.
 
-1. `.build/debug/Vimursor` を実行すると、権限ダイアログが表示される
-2. 「システム設定」→「プライバシーとセキュリティ」→「アクセシビリティ」を開く
-3. `Vimursor` または Terminal（`swift run` で実行する場合）を有効にする
-4. 権限付与後、アプリを再起動する
+1. Run `.build/debug/Vimursor` — a permission dialog will appear
+2. Open "System Settings" → "Privacy & Security" → "Accessibility"
+3. Enable `Vimursor` or Terminal (if running via `swift run`)
+4. Restart the app after granting permission
 
-権限がない状態でも起動自体は可能ですが、AXUIElement の操作（要素取得・クリック）が失敗します。
+The app can still launch without permission, but AXUIElement operations (element enumeration and clicking) will fail.
 
-### 3. ビルドコマンド
+### 3. Build Commands
 
 ```bash
-swift build                        # デバッグビルド
-swift build -c release             # リリースビルド
-swift test                         # テスト実行
-swift test --enable-code-coverage  # カバレッジ付きテスト
-.build/debug/Vimursor              # デバッグ実行
+swift build                        # Debug build
+swift build -c release             # Release build
+swift test                         # Run tests
+swift test --enable-code-coverage  # Run tests with coverage
+.build/debug/Vimursor              # Run debug build
 ```
 
 ---
 
-## アーキテクチャ概要
+## Architecture Overview
 
-### ディレクトリ構造
+### Directory Structure
 
 ```
 Sources/Vimursor/
-├── main.swift               # エントリポイント
-├── AppDelegate.swift        # ライフサイクル管理・権限チェック
-├── HotkeyManager.swift      # CGEventTapによるグローバルホットキー
-├── Accessibility/           # AXUIElementラッパー・UI要素列挙
-├── Overlay/                 # NSPanel・ラベル生成
-├── HintMode/                # ヒントモード制御・描画
-├── SearchMode/              # 検索モード制御・UI
-└── ScrollMode/              # スクロールモード制御
+├── main.swift               # Entry point
+├── AppDelegate.swift        # Lifecycle management, permission check
+├── HotkeyManager.swift      # Global hotkeys via CGEventTap
+├── Accessibility/           # AXUIElement wrapper, UI element enumeration
+├── Overlay/                 # NSPanel, label generation
+├── HintMode/                # Hint mode control and rendering
+├── SearchMode/              # Search mode control and UI
+└── ScrollMode/              # Scroll mode control
 ```
 
-### 主要モジュールの役割
+### Module Responsibilities
 
-| モジュール | 役割 |
-|-----------|------|
-| `AppDelegate` | アプリ起動時の権限チェック、メニューバーアイコン管理 |
-| `HotkeyManager` | `CGEventTap` でグローバルキーイベントを捕捉し各モードを起動 |
-| `Accessibility/AXManager` | `AXUIElement` を通じてクリック可能・検索対象の要素を列挙、クリック実行 |
-| `Overlay/LabelGenerator` | 要素数に応じたラベル文字列（`a`, `b`, ..., `aa`, `ab`, ...）を生成 |
-| `Overlay/OverlayWindow` | `NSPanel` を使ったオーバーレイウィンドウの生成・配置 |
-| `HintMode/HintModeController` | ヒントモードの状態管理（起動→ラベル表示→キー入力→クリック→終了） |
-| `SearchMode/SearchModeController` | 検索モードの状態管理、テキストフィルタリング（純粋関数） |
-| `ScrollMode/` | スクロールモードの状態管理、スクロール領域の検出 |
+| Module | Responsibility |
+|--------|----------------|
+| `AppDelegate` | Permission check on launch, menu bar icon management |
+| `HotkeyManager` | Captures global key events via `CGEventTap` and activates each mode |
+| `Accessibility/AXManager` | Enumerates clickable and searchable elements via `AXUIElement`, performs clicks |
+| `Overlay/LabelGenerator` | Generates label strings (`a`, `b`, ..., `aa`, `ab`, ...) based on element count |
+| `Overlay/OverlayWindow` | Creates and positions overlay windows using `NSPanel` |
+| `HintMode/HintModeController` | Manages hint mode state (start → label display → key input → click → exit) |
+| `SearchMode/SearchModeController` | Manages search mode state, text filtering (pure functions) |
+| `ScrollMode/` | Manages scroll mode state, detects scrollable regions |
 
-### 処理フロー（ヒントモード）
+### Processing Flow (Hint Mode)
 
 ```
 Cmd+Shift+Space
@@ -71,82 +71,82 @@ Cmd+Shift+Space
   → HintModeController.start()
   → AXManager.fetchClickableElements()
   → LabelGenerator.generate(count:)
-  → OverlayWindow + HintView（ラベル描画）
-  → キー入力でフィルタリング
-  → 完全一致 → AXUIElementPerformAction("AXPress")
-  → オーバーレイ閉じる
+  → OverlayWindow + HintView (label rendering)
+  → Key input for filtering
+  → Exact match → AXUIElementPerformAction("AXPress")
+  → Close overlay
 ```
 
 ---
 
-## コードスタイルガイドライン
+## Code Style Guidelines
 
-詳細は `.claude/rules/common/coding-style.md` を参照してください。主要ルールを以下に示します。
+Key rules are listed below.
 
-### イミュータビリティ優先
+### Prefer Immutability
 
-- `class` より `struct`（値型）を使う
-- `var` より `let` を使う
+- Use `struct` (value types) over `class`
+- Use `let` over `var`
 
 ```swift
-// 推奨
+// Preferred
 struct Config {
     let labels: [String]
 }
 
-// 非推奨
+// Not preferred
 class Config {
     var labels: [String] = []
 }
 ```
 
-### ファイル・関数サイズ
+### File and Function Size
 
-- 関数は **50 行以内**
-- ファイルは **200〜400 行** が目安、**800 行が上限**
-- 大きくなる場合は機能・責務ごとにファイルを分割する
+- Functions should be **50 lines or fewer**
+- Files should typically be **200–400 lines**, with a **hard limit of 800 lines**
+- Split files by feature or responsibility when they grow too large
 
-### エラーハンドリング
+### Error Handling
 
-- `AXUIElement` が返す `AXError` は必ず確認する
-- `Optional` の強制アンラップ（`!`）は禁止（`guard let` / `if let` を使う）
-- Silent failure（エラーを握りつぶす）は禁止
+- Always check `AXError` returned by `AXUIElement`
+- Force unwrapping (`!`) is prohibited — use `guard let` / `if let`
+- Silent failures (swallowing errors) are prohibited
 
-### その他
+### Other
 
-- キーコード等の定数はファイル上部にまとめる（マジックナンバー禁止）
-- UI 操作は必ず `DispatchQueue.main.async` で実行する
-- デリゲート・クロージャの循環参照を防ぐため `[weak self]` を使う
+- Group constants such as key codes at the top of the file (no magic numbers)
+- All UI operations must run on `DispatchQueue.main.async`
+- Use `[weak self]` in delegates and closures to prevent retain cycles
 
 ---
 
-## テスト方針
+## Testing Policy
 
-詳細は `.claude/rules/common/testing.md` を参照してください。
+Details are described below.
 
-### TDD フロー
+### TDD Flow
 
-実装は必ずテストファーストで進めます。
+All implementation must follow a test-first approach.
 
-1. **RED** — 失敗するテストを書く
-2. **GREEN** — テストが通る最小実装を書く
-3. **REFACTOR** — コードを改善しながらテストをグリーンに保つ
+1. **RED** — Write a failing test
+2. **GREEN** — Write the minimal implementation to make it pass
+3. **REFACTOR** — Improve the code while keeping tests green
 
 ```bash
-swift test   # RED / GREEN の確認
+swift test   # Verify RED / GREEN
 ```
 
-### テスト対象の分類
+### Test Classification
 
-| 対象 | テスト方法 |
-|------|-----------|
-| 純粋ロジック（`LabelGenerator`、`SearchModeController.filter` 等） | Swift Testing で単体テスト |
-| `AXUIElement` 呼び出し | プロトコルでラップしてモックに差し替え |
-| `NSPanel` / `CGEventTap` | システム依存のため手動テスト |
+| Target | Approach |
+|--------|----------|
+| Pure logic (`LabelGenerator`, `SearchModeController.filter`, etc.) | Unit tests with Swift Testing |
+| `AXUIElement` calls | Wrap with protocol and substitute a mock |
+| `NSPanel` / `CGEventTap` | Manual testing (system-dependent) |
 
-### テストフレームワーク
+### Test Framework
 
-`XCTest` ではなく **Swift Testing** を使います。
+Use **Swift Testing**, not `XCTest`.
 
 ```swift
 import Testing
@@ -162,9 +162,9 @@ struct LabelGeneratorTests {
 }
 ```
 
-### カバレッジ目標
+### Coverage Target
 
-**80% 以上**を維持してください。
+Maintain **80% or above**.
 
 ```bash
 swift test --enable-code-coverage
@@ -172,59 +172,59 @@ swift test --enable-code-coverage
 
 ---
 
-## Issue 管理
+## Issue Management
 
-開発は GitHub Issue を起点に進めます。
+Development is driven by GitHub Issues.
 
-| ラベル | 用途 | タイトル例 |
-|--------|------|-----------|
-| `epic` | 機能グループ・マイルストーン | `[Epic 3] 配布基盤` |
-| `task` | 個別の実装タスク（Epic の子） | `[3-1] .appバンドル化` |
-| `memo` | 技術的知見・調査記録 | `[memo] AX座標系の変換` |
-| `bug` | バグ報告 | `[bug] ヒントラベルが表示されない` |
-| `enhancement` | 機能要望 | `[request] ダークモード対応` |
+| Label | Purpose | Example Title |
+|-------|---------|---------------|
+| `epic` | Feature group / milestone | `[Epic 3] Distribution Infrastructure` |
+| `task` | Individual implementation task (child of Epic) | `[3-1] Create .app bundle` |
+| `memo` | Technical knowledge / research notes | `[memo] AX coordinate system conversion` |
+| `bug` | Bug report | `[bug] Hint labels not displayed` |
+| `enhancement` | Feature request | `[request] Dark mode support` |
 
-PR は対応する Issue 番号を紐づけてください。
+Link the corresponding Issue number to each PR.
 
 ---
 
-## ブランチ運用
+## Branch Strategy
 
 ```
-main           ── リリース済みの安定版
-  └─ develop   ── 開発統合ブランチ
-       ├─ feature/epic<N>-<name>  ── 機能単位の作業ブランチ（Epic 単位）
-       ├─ fix/<name>              ── バグ修正ブランチ
-       └─ docs/<name>             ── ドキュメントブランチ
+main           ── Stable released version
+  └─ develop   ── Development integration branch
+       ├─ feature/epic<N>-<name>  ── Feature branch (per Epic)
+       ├─ fix/<name>              ── Bug fix branch
+       └─ docs/<name>             ── Documentation branch
 ```
 
-### 通常の開発フロー（feature → develop）
+### Standard Development Flow (feature → develop)
 
 ```bash
-# 1. develop から作業ブランチを切る
+# 1. Create a working branch from develop
 git checkout develop
 git checkout -b feature/epic3-distribution
 
-# 2. 実装・コミット
+# 2. Implement and commit
 git commit -m "feat: Add my feature"
 
-# 3. develop へ PR を出す
+# 3. Open a PR to develop
 git push -u origin feature/epic3-distribution
-# GitHub で PR を作成 → レビュー → squash merge
+# Create PR on GitHub → Review → Squash merge
 ```
 
-### リリースフロー（develop → release → main）
+### Release Flow (develop → release → main)
 
 ```bash
-# 1. develop から release ブランチを切る
+# 1. Create a release branch from develop
 git checkout develop
 git checkout -b release/v1.0
 
-# 2. release → main へ PR を出す
+# 2. Open a PR from release to main
 git push -u origin release/v1.0
-# GitHub で PR を作成 → 確認 → squash merge
+# Create PR on GitHub → Review → Squash merge
 
-# 3. main にタグを打つ
+# 3. Tag main
 git checkout main
 git pull
 git tag v1.0
@@ -233,50 +233,50 @@ git push origin v1.0
 
 ---
 
-## コミットメッセージ
+## Commit Messages
 
 ```
 <type>: <description>
 ```
 
-| type | 用途 |
-|------|------|
-| `feat` | 新機能 |
-| `fix` | バグ修正 |
-| `refactor` | リファクタリング |
-| `docs` | ドキュメントのみの変更 |
-| `test` | テストの追加・修正 |
-| `chore` | ビルド設定・ツール等 |
-| `perf` | パフォーマンス改善 |
+| type | Purpose |
+|------|---------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `refactor` | Refactoring |
+| `docs` | Documentation-only changes |
+| `test` | Adding or updating tests |
+| `chore` | Build configuration, tooling, etc. |
+| `perf` | Performance improvement |
 
 ---
 
-## PR のガイドライン
+## PR Guidelines
 
-### PR の単位
+### PR Scope
 
-- **PR は Epic 単位**でまとめます（タスク単位では出しません）
-- `feature/**` / `fix/**` / `docs/**` → `develop` へ PR
-- `release/**` → `main` へ PR
+- **PRs are grouped per Epic** (not per individual task)
+- `feature/**` / `fix/**` / `docs/**` → PR targets `develop`
+- `release/**` → PR targets `main`
 
-### マージ方式
+### Merge Strategy
 
-すべての PR は **squash merge** で取り込みます。
+All PRs are merged via **squash merge**.
 
-### PR タイトル・本文
+### PR Title and Body
 
-- タイトルはコミットメッセージと同じ形式（`feat: ...`）
-- 本文には対象 Issue を `Closes #XX` で列挙する（squash merge 後に自動クローズされる）
-- Epic Issue 自体も `Closes #N` に含める
+- Title follows the same format as commit messages (`feat: ...`)
+- List the related Issues in the body using `Closes #XX` (auto-closed after squash merge)
+- Include the Epic Issue itself in the `Closes #N` list
 
-### PR テンプレートの使い分け
+### PR Template Selection
 
-| 用途 | テンプレート | 使い方 |
-|------|------------|--------|
-| `develop` 向け（通常開発） | `.github/pull_request_template.md` | PR 作成時のデフォルト |
-| `main` 向け（リリース） | `.github/PULL_REQUEST_TEMPLATE/release.md` | PR URL に `?template=release.md` を付与 |
+| Use case | Template | How to use |
+|----------|----------|------------|
+| Targeting `develop` (standard development) | `.github/pull_request_template.md` | Default when creating a PR |
+| Targeting `main` (release) | `.github/PULL_REQUEST_TEMPLATE/release.md` | Append `?template=release.md` to the PR URL |
 
-リリース PR を作成する場合は GitHub の URL に `?template=release.md` を追加してください。
+When creating a release PR, add `?template=release.md` to the GitHub URL:
 
 ```
 https://github.com/kodakoda-koda/Vimursor/compare/main...release/v1.0?template=release.md

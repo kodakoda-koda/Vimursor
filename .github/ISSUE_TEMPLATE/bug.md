@@ -1,25 +1,25 @@
 ---
 name: Bug Report
-about: バグ・不具合の報告
+about: Report a bug or unexpected behavior
 title: '[bug] '
 labels: bug
 ---
 
-## 現象
+## Description
 
-## 再現手順
+## Steps to Reproduce
 
 1.
 2.
 3.
 
-## 期待する動作
+## Expected Behavior
 
-## 環境
+## Environment
 
 - macOS:
 - Vimursor:
 
-## スクリーンショット/ログ
+## Screenshots / Logs
 
-<!-- 問題を示すスクリーンショットや、コンソールログがあれば貼り付けてください -->
+<!-- Attach screenshots or paste console logs if available -->

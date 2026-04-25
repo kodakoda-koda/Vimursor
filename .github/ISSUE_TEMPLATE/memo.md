@@ -1,10 +1,10 @@
 ---
 name: Memo
-about: 技術的知見・調査記録・アイデアなど
+about: Technical notes, research findings, or ideas
 title: '[memo] '
 labels: memo
 ---
 
-## 内容
+## Content
 
-## 関連
+## Related
