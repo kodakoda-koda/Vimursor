@@ -1,0 +1,28 @@
+name: Epic
+description: A group of related features or a milestone.
+labels: ["epic"]
+title: "[Epic N] "
+body:
+  - type: textarea
+    id: overview
+    attributes:
+      label: Overview
+      description: Describe the scope and goal of this epic.
+    validations:
+      required: true
+  - type: textarea
+    id: child-issues
+    attributes:
+      label: Child Issues
+      description: List child task issues (use task list format).
+      value: |
+        - [ ]
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What conditions must be met for this epic to be considered complete?
+    validations:
+      required: true

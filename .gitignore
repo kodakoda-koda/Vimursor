@@ -9,3 +9,7 @@ DerivedData/
 *.profraw
 /Vimursor.app
 /Vimursor.dmg
+
+# AI assistant config (personal settings)
+CLAUDE.md
+.claude/

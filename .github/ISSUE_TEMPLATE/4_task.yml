@@ -1,0 +1,43 @@
+name: Task
+description: An individual implementation task.
+labels: ["task"]
+title: "[N-M] "
+body:
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: Context and motivation for this task.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What conditions must be met for this task to be considered complete?
+    validations:
+      required: true
+  - type: textarea
+    id: files
+    attributes:
+      label: Files to Change
+      description: List the files that need to be created or modified.
+    validations:
+      required: false
+  - type: textarea
+    id: design-notes
+    attributes:
+      label: Design Decisions / Technical Notes
+      description: Any design decisions, technical constraints, or implementation notes.
+    validations:
+      required: false
+  - type: textarea
+    id: related
+    attributes:
+      label: Related
+      description: Links to related epic, PR, or other issues.
+      value: |
+        - Epic: #
+        - PR: #
+    validations:
+      required: false
