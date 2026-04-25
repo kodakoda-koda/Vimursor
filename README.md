@@ -1,15 +1,21 @@
-# Vimursor
+<p align="center">
+  <img src="docs/images/header.svg" alt="Vimursor - Vim-style navigation for macOS" width="800">
+</p>
 
-Navigate macOS with Vim-style commands. Vimursor brings Vim's philosophy — **keep your hands on the home row** — to the entire operating system, letting you click, search, and scroll any UI element without touching the mouse.
+<p align="center">
+  Navigate macOS with Vim-style commands. Vimursor brings Vim's philosophy — <strong>keep your hands on the home row</strong> — to the entire operating system, letting you click, search, and scroll any UI element without touching the mouse.
+</p>
 
-Not available on the App Store (distributed outside the sandbox due to Accessibility API requirements).
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <a href="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml"><img src="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml/badge.svg)](https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml)
+<p align="center">
+  Not available on the App Store (distributed outside the sandbox due to Accessibility API requirements).
+</p>
 
 ---
-
-<!-- TODO: Add screenshot/GIF demonstrating hint mode -->
 
 ## Features
 
