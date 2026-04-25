@@ -120,20 +120,13 @@ class Config {
 
 ---
 
-## Testing Policy
+## Testing
 
-Details are described below.
-
-### TDD Flow
-
-All implementation must follow a test-first approach.
-
-1. **RED** — Write a failing test
-2. **GREEN** — Write the minimal implementation to make it pass
-3. **REFACTOR** — Improve the code while keeping tests green
+PRs should include tests for new features and bug fixes.
 
 ```bash
-swift test   # Verify RED / GREEN
+swift test                         # Run tests
+swift test --enable-code-coverage  # Run tests with coverage
 ```
 
 ### Test Classification
@@ -164,11 +157,7 @@ struct LabelGeneratorTests {
 
 ### Coverage Target
 
-Maintain **80% or above**.
-
-```bash
-swift test --enable-code-coverage
-```
+Aim for **80% or above**.
 
 ---
 
@@ -273,11 +262,7 @@ All PRs are merged via **squash merge**.
 
 | Use case | Template | How to use |
 |----------|----------|------------|
-| Targeting `develop` (standard development) | `.github/pull_request_template.md` | Default when creating a PR |
-| Targeting `main` (release) | `.github/PULL_REQUEST_TEMPLATE/release.md` | Append `?template=release.md` to the PR URL |
+| Targeting `develop` (standard development) | `develop.md` | Self-review checklist, test plan |
+| Targeting `main` (release) | `release.md` | Version info, release notes, release checklist |
 
-When creating a release PR, add `?template=release.md` to the GitHub URL:
-
-```
-https://github.com/kodakoda-koda/Vimursor/compare/main...release/v1.0?template=release.md
-```
+When creating a PR, GitHub will show a template selection screen. Choose the appropriate template for your PR target.
