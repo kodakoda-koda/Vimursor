@@ -1,8 +1,5 @@
 import AppKit
 import KeyboardShortcuts
-import os
-
-private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar")
 
 // MARK: - Constants
 
@@ -106,70 +103,12 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         configureMenu()
     }
 
-    // MARK: - Private constants
-
-    private enum IconSize {
-        static let menuBar: CGFloat = 18
-    }
-
     // MARK: - Private configuration
 
     private func configureButton() {
         guard let button = statusItem.button else { return }
-        button.image = loadMenuBarIcon() ?? fallbackMenuBarIcon()
+        button.image = MenuBarIconLoader.loadFromBundle() ?? MenuBarIconLoader.fallbackIcon()
         button.toolTip = "Vimursor"
-    }
-
-    /// Bundle から MenuBarIcon.png を読み込む。
-    /// @2x 表現も登録し、isTemplate = true を設定する。
-    private func loadMenuBarIcon() -> NSImage? {
-        guard let resourcePath = Bundle.main.resourcePath else { return nil }
-
-        let baseURL = URL(fileURLWithPath: resourcePath)
-        let path1x = baseURL.appendingPathComponent("MenuBarIcon.png").path
-        let path2x = baseURL.appendingPathComponent("MenuBarIcon@2x.png").path
-
-        guard FileManager.default.fileExists(atPath: path1x),
-              let sourceImage1x = NSImage(contentsOfFile: path1x),
-              let rep1x = sourceImage1x.representations.first as? NSBitmapImageRep,
-              let rep1xCopy = rep1x.copy() as? NSBitmapImageRep
-        else {
-            logger.debug("MenuBarIcon.png が Bundle に見つかりません（デバッグビルド等では正常）")
-            return nil
-        }
-
-        let targetSize = NSSize(width: IconSize.menuBar, height: IconSize.menuBar)
-        let icon = NSImage(size: targetSize)
-
-        // @1x 表現を追加（scale = 1.0 相当）
-        rep1xCopy.size = targetSize
-        icon.addRepresentation(rep1xCopy)
-
-        // @2x 表現が存在すれば追加
-        if FileManager.default.fileExists(atPath: path2x),
-           let sourceImage2x = NSImage(contentsOfFile: path2x),
-           let rep2x = sourceImage2x.representations.first as? NSBitmapImageRep,
-           let rep2xCopy = rep2x.copy() as? NSBitmapImageRep {
-            rep2xCopy.size = targetSize
-            icon.addRepresentation(rep2xCopy)
-        }
-
-        icon.size = targetSize
-        icon.isTemplate = true
-        return icon
-    }
-
-    /// カスタムアイコンが読み込めない場合の SF Symbol フォールバック。
-    private func fallbackMenuBarIcon() -> NSImage? {
-        guard let icon = NSImage(
-            systemSymbolName: "keyboard",
-            accessibilityDescription: "Vimursor"
-        ) else {
-            logger.warning("SF Symbol 'keyboard' の読み込みに失敗しました")
-            return nil
-        }
-        icon.isTemplate = true
-        return icon
     }
 
     private func configureMenu() {

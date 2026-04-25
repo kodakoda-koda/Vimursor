@@ -94,7 +94,7 @@ func parseSVGPath(_ d: String) -> NSBezierPath {
         // Note: lowercase (relative) commands (m, l, h, v) are not supported.
         // All path data in this file uses uppercase (absolute) commands only.
         default:
-            break
+            fatalError("Unsupported SVG path command '\(cmd)' at token index \(i)")
         }
         i += 1
     }
@@ -317,14 +317,14 @@ func drawIcon(size: CGFloat) -> NSImage {
     let offsetY = gutter + contentPad + (available - svgHeight * scaleVal) / 2
 
     // SVG → screen transform
-    let transform = NSAffineTransform()
-    transform.translateX(by: offsetX, yBy: offsetY + svgHeight * scaleVal)
-    transform.scaleX(by: scaleVal, yBy: -scaleVal)
+    var transform = AffineTransform()
+    transform.translate(x: offsetX, y: offsetY + svgHeight * scaleVal)
+    transform.scale(x: scaleVal, y: -scaleVal)
 
     for layer in layers {
         let svgPath = parseSVGPath(layer.d)
         guard let drawPath = svgPath.copy() as? NSBezierPath else { continue }
-        drawPath.transform(using: transform as AffineTransform)
+        drawPath.transform(using: transform)
 
         if let fill = layer.fill {
             fill.setFill()
@@ -461,8 +461,11 @@ func generateIcns(outputPath: String) throws {
 
 // ── Main ───────────────────────────────────────────────────────
 
-let repoRoot = FileManager.default.currentDirectoryPath
-let resourcesDir = "\(repoRoot)/Resources"
+let scriptURL = URL(fileURLWithPath: #filePath)
+let repoRootURL = scriptURL
+    .deletingLastPathComponent() // scripts/
+    .deletingLastPathComponent() // repository root
+let resourcesDir = repoRootURL.appendingPathComponent("Resources").path
 try FileManager.default.createDirectory(atPath: resourcesDir, withIntermediateDirectories: true)
 
 // アプリアイコンプレビュー (既存)
