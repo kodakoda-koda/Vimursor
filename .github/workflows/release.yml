@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Test
         run: swift test
@@ -60,5 +62,9 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add Casks/vimursor.rb
-          git commit -m "chore: update Vimursor to v${VERSION}"
-          git push
+          if git diff --cached --quiet -- Casks/vimursor.rb; then
+            echo "No changes in Casks/vimursor.rb; skipping commit and push."
+          else
+            git commit -m "chore: update Vimursor to v${VERSION}"
+            git push
+          fi
