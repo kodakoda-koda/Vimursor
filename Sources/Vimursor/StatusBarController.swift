@@ -1,8 +1,5 @@
 import AppKit
 import KeyboardShortcuts
-import os
-
-private let logger = Logger(subsystem: "com.vimursor.app", category: "StatusBar")
 
 // MARK: - Constants
 
@@ -110,15 +107,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     private func configureButton() {
         guard let button = statusItem.button else { return }
-        guard let icon = NSImage(
-            systemSymbolName: "keyboard",
-            accessibilityDescription: "Vimursor"
-        ) else {
-            logger.warning("SF Symbol 'keyboard' の読み込みに失敗しました")
-            return
-        }
-        icon.isTemplate = true
-        button.image = icon
+        button.image = MenuBarIconLoader.loadFromBundle() ?? MenuBarIconLoader.fallbackIcon()
         button.toolTip = "Vimursor"
     }
 
