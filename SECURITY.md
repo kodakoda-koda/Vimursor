@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-Vimursor has not yet reached an official release. All development is ongoing on the `main` and `develop` branches.
+Vimursor has not yet reached an official release. All development is ongoing on the `main` branch.
 
 | Version | Supported |
 |---------|-----------|
