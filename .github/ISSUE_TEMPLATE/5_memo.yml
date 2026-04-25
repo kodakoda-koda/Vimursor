@@ -1,0 +1,18 @@
+name: Memo
+description: Technical notes, research findings, or ideas.
+labels: ["memo"]
+title: "[memo] "
+body:
+  - type: textarea
+    id: content
+    attributes:
+      label: Content
+    validations:
+      required: true
+  - type: textarea
+    id: related
+    attributes:
+      label: Related
+      description: Links to related issues or resources.
+    validations:
+      required: false
