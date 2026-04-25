@@ -220,27 +220,16 @@ git push -u origin feature/epic3-distribution
 git checkout develop
 git checkout -b release/v1.0
 
-# 2. main に含めない開発用ファイルを削除してコミット
-git rm -r .claude/ CLAUDE.md
-git commit -m "chore: Remove dev-only files for release"
-
-# 3. release → main へ PR を出す
+# 2. release → main へ PR を出す
 git push -u origin release/v1.0
 # GitHub で PR を作成 → 確認 → squash merge
 
-# 4. main にタグを打つ
+# 3. main にタグを打つ
 git checkout main
 git pull
 git tag v1.0
 git push origin v1.0
 ```
-
-### `main` に含めないファイル
-
-| ファイル/ディレクトリ | 理由 |
-|----------------------|------|
-| `.claude/` | Claude Code 設定（開発ツール） |
-| `CLAUDE.md` | エージェント向けプロジェクト指示 |
 
 ---
 
