@@ -1,8 +1,8 @@
 # Vimursor
 
-macOS をキーボードのみで操作するためのツールです。[Homerow](https://www.homerow.app/) のオープンソース代替を目指しています。
+macOS をキーボードのみで操作するためのオープンソースツールです。Accessibility API を活用し、画面上の UI 要素をキーボードだけでクリック・スクロールできます。
 
-Accessibility API を使用するため、App Store 非対応です（サンドボックス外配布）。
+App Store 非対応（Accessibility API のためサンドボックス外配布）。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![CI](https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml/badge.svg)](https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml)
