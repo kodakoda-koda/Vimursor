@@ -42,8 +42,8 @@ Vimursor uses macOS Accessibility APIs and global event monitoring. The followin
 
 ### Global Key Event Monitoring
 
-- Vimursor installs a **CGEventTap** to intercept specific keyboard shortcuts (e.g., Cmd+Shift+Space).
-- Only the configured activation shortcuts are consumed; all other key events are passed through unmodified.
+- Vimursor uses **KeyboardShortcuts** (Carbon hotkey API) for mode activation (e.g., Cmd+Shift+Space) and a **CGEventTap** to consume key events while a mode is active.
+- Only the configured shortcuts and in-mode key events are consumed; all other key events are passed through unmodified.
 - No keystrokes are logged or stored.
 
 ### No Network Communication

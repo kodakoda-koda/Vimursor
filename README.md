@@ -25,7 +25,7 @@
 | `Cmd+Shift+/` | **Search Mode** — Find elements by text, like Vim's `/` search |
 | `Cmd+Shift+J` | **Scroll Mode** — Scroll with `j`/`k`/`u`/`d`, just like Vim |
 
-Shortcuts can be changed via the menu bar icon → "Preferences...".
+Shortcuts can be changed via the menu bar icon → "Settings...".
 
 ### Hint Mode — EasyMotion for macOS
 
