@@ -39,3 +39,26 @@ jobs:
         with:
           files: Vimursor.dmg
           body: ${{ steps.changelog.outputs.content }}
+
+      - name: Calculate DMG SHA256
+        id: sha256
+        run: echo "hash=$(shasum -a 256 Vimursor.dmg | awk '{print $1}')" >> "$GITHUB_OUTPUT"
+
+      - name: Update Homebrew Cask
+        env:
+          TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          SHA256="${{ steps.sha256.outputs.hash }}"
+
+          git clone https://x-access-token:${TAP_TOKEN}@github.com/kodakoda-koda/homebrew-vimursor.git /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" Casks/vimursor.rb
+          sed -i '' "s/sha256 \".*\"/sha256 \"${SHA256}\"/" Casks/vimursor.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Casks/vimursor.rb
+          git commit -m "chore: update Vimursor to v${VERSION}"
+          git push
