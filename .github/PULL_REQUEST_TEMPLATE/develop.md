@@ -11,12 +11,14 @@
 
 <!-- Closes #xxx -->
 
-## Testing
+## Self-Review Checklist
 
+- [ ] I've reviewed my own diff
+- [ ] Tests cover the new/changed behavior
 - [ ] `swift build` passes
 - [ ] `swift test` passes
 - [ ] Manual testing completed
 
-## Checklist
+## Test Plan
 
-- [ ] Commit messages follow the convention
+<!-- How was this tested? What scenarios were verified? -->
