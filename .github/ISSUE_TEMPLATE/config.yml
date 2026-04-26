@@ -1,5 +1,1 @@
-blank_issues_enabled: false
-contact_links:
-  - name: Feature Request
-    url: https://github.com/kodakoda-koda/Vimursor/discussions/new?category=ideas
-    about: Suggest a new feature or improvement in Discussions.
+blank_issues_enabled: true

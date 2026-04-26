@@ -7,7 +7,6 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml"><img src="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 </p>
 
@@ -29,8 +28,6 @@ Shortcuts can be changed via the menu bar icon → "Settings...".
 
 ### Hint Mode — EasyMotion for macOS
 
-<!-- TODO: Add GIF demonstrating hint mode -->
-
 Inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion). Labels appear on every clickable element — type the label to jump there instantly.
 
 1. Press `Cmd+Shift+Space` to display labels (`A`, `B`, `SA`, etc.) on all clickable elements
@@ -40,8 +37,6 @@ Inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion). Labe
 
 ### Search Mode — Vim `/` Search
 
-<!-- TODO: Add GIF demonstrating search mode -->
-
 Like Vim's `/` command, search for elements by text and jump to them.
 
 1. Press `Cmd+Shift+/` to open a search bar at the bottom of the screen
@@ -50,8 +45,6 @@ Like Vim's `/` command, search for elements by text and jump to them.
 4. Press `ESC` to cancel
 
 ### Scroll Mode — Vim-style Scrolling
-
-<!-- TODO: Add GIF demonstrating scroll mode -->
 
 Scroll any window using familiar Vim motions.
 
@@ -74,14 +67,7 @@ Scroll any window using familiar Vim motions.
 
 ## Installation
 
-### Homebrew (recommended)
-
-```bash
-brew tap kodakoda-koda/vimursor
-brew install --cask vimursor
-```
-
-### Download from GitHub Releases
+### Download from GitHub Releases (recommended)
 
 1. Download the latest `Vimursor.dmg` from the [Releases page](https://github.com/kodakoda-koda/Vimursor/releases)
 2. Open the DMG and drag `Vimursor.app` to the `/Applications` folder
@@ -151,4 +137,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for more details.
 
 ## License
 
-[MIT License](LICENSE)
+All rights reserved.
