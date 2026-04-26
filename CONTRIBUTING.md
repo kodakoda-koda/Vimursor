@@ -1,6 +1,6 @@
 # Contributing to Vimursor
 
-Thanks for your interest in contributing! Here's how to get started.
+How to set up the development environment and contribute.
 
 ## Development Setup
 
@@ -87,10 +87,5 @@ Sources/Vimursor/
 ## Reporting Issues
 
 - **Bugs**: Use the [Bug Report](https://github.com/kodakoda-koda/Vimursor/issues/new/choose) template
-- **Feature ideas**: Open a [Discussion](https://github.com/kodakoda-koda/Vimursor/discussions/new?category=ideas)
+- **Feature ideas**: Use the [Feature Request](https://github.com/kodakoda-koda/Vimursor/issues/new/choose) template
 
----
-
-## License
-
-By contributing, you agree that your contributions will be licensed under the [MIT License](LICENSE).
