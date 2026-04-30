@@ -9,6 +9,7 @@ private enum MenuItemTag {
     static let hintMode = 102
     static let searchMode = 103
     static let scrollMode = 104
+    static let cursorMode = 105
 }
 
 // MARK: - Protocol
@@ -53,6 +54,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     private let onHintMode: () -> Void
     private let onSearchMode: () -> Void
     private let onScrollMode: () -> Void
+    private let onCursorMode: () -> Void
     private let onSettings: (() -> Void)?
     private let loginItemManager: LoginItemManager?
     private let settings: AppSettings
@@ -64,6 +66,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onCursorMode: @escaping () -> Void = {},
         onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
         settings: AppSettings = .shared
@@ -73,6 +76,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
             onHintMode: onHintMode,
             onSearchMode: onSearchMode,
             onScrollMode: onScrollMode,
+            onCursorMode: onCursorMode,
             onSettings: onSettings,
             loginItemManager: loginItemManager,
             settings: settings
@@ -85,6 +89,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         onHintMode: @escaping () -> Void,
         onSearchMode: @escaping () -> Void,
         onScrollMode: @escaping () -> Void,
+        onCursorMode: @escaping () -> Void = {},
         onSettings: (() -> Void)? = nil,
         loginItemManager: LoginItemManager? = nil,
         settings: AppSettings = .shared
@@ -93,6 +98,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         self.onHintMode = onHintMode
         self.onSearchMode = onSearchMode
         self.onScrollMode = onScrollMode
+        self.onCursorMode = onCursorMode
         self.onSettings = onSettings
         self.loginItemManager = loginItemManager
         self.settings = settings
@@ -154,6 +160,16 @@ final class StatusBarController: NSObject, NSMenuDelegate {
         scrollItem.tag = MenuItemTag.scrollMode
         scrollItem.setShortcut(for: .scrollMode)
         menu.addItem(scrollItem)
+
+        let cursorItem = NSMenuItem(
+            title: "Cursor Mode",
+            action: #selector(activateCursorMode),
+            keyEquivalent: ""
+        )
+        cursorItem.target = self
+        cursorItem.tag = MenuItemTag.cursorMode
+        cursorItem.setShortcut(for: .cursorMode)
+        menu.addItem(cursorItem)
     }
 
     private func addAppItems(to menu: NSMenu) {
@@ -211,7 +227,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         // メニューが開いている間は Carbon ホットキーをバッファしないよう無効化する
-        KeyboardShortcuts.disable(.hintMode, .searchMode, .scrollMode)
+        KeyboardShortcuts.disable(.hintMode, .searchMode, .scrollMode, .cursorMode)
 
         // macOS のメニュー描画エンジンは Shift+記号キー（例: Shift+/）の表示を正しく描画できない。
         // setShortcut(for:) が "/" + [.command, .shift] を設定するため、
@@ -241,7 +257,7 @@ final class StatusBarController: NSObject, NSMenuDelegate {
     }
 
     func menuDidClose(_ menu: NSMenu) {
-        KeyboardShortcuts.enable(.hintMode, .searchMode, .scrollMode)
+        KeyboardShortcuts.enable(.hintMode, .searchMode, .scrollMode, .cursorMode)
     }
 
     // MARK: - Menu actions
@@ -256,6 +272,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     @objc private func activateScrollMode() {
         onScrollMode()
+    }
+
+    @objc private func activateCursorMode() {
+        onCursorMode()
     }
 
     @objc private func openSettings() {
@@ -291,6 +311,10 @@ final class StatusBarController: NSObject, NSMenuDelegate {
 
     func simulateScrollMode() {
         onScrollMode()
+    }
+
+    func simulateCursorMode() {
+        onCursorMode()
     }
 
     func simulateSettings() {

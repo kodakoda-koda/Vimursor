@@ -24,6 +24,7 @@ enum AppSettingsKey {
     static let isContinuousMode = "hintMode.continuousMode"  // 既存キーと互換
     static let reactivationDelay = "behavior.reactivationDelay"
     static let scrollStepLines = "behavior.scrollStepLines"
+    static let cursorStepPixels = "behavior.cursorStepPixels"
 }
 
 // MARK: - AppSettings
@@ -45,6 +46,7 @@ final class AppSettings: @unchecked Sendable {
         static let isContinuousMode: Bool = false
         static let reactivationDelay: TimeInterval = 0.3
         static let scrollStepLines: Int = 3
+        static let cursorStepPixels: Int = 5
     }
 
     // MARK: - Storage
@@ -67,7 +69,8 @@ final class AppSettings: @unchecked Sendable {
             AppSettingsKey.hintCharacterSet: Defaults.hintCharacterSet,
             AppSettingsKey.isContinuousMode: Defaults.isContinuousMode,
             AppSettingsKey.reactivationDelay: Defaults.reactivationDelay,
-            AppSettingsKey.scrollStepLines: Defaults.scrollStepLines
+            AppSettingsKey.scrollStepLines: Defaults.scrollStepLines,
+            AppSettingsKey.cursorStepPixels: Defaults.cursorStepPixels
         ])
     }
 
@@ -132,6 +135,11 @@ final class AppSettings: @unchecked Sendable {
         set { defaults.set(newValue, forKey: AppSettingsKey.scrollStepLines) }
     }
 
+    var cursorStepPixels: Int {
+        get { defaults.integer(forKey: AppSettingsKey.cursorStepPixels) }
+        set { defaults.set(newValue, forKey: AppSettingsKey.cursorStepPixels) }
+    }
+
     // MARK: - Reset
 
     /// 全設定をデフォルト値にリセットする。
@@ -146,7 +154,8 @@ final class AppSettings: @unchecked Sendable {
             AppSettingsKey.hintCharacterSet,
             AppSettingsKey.isContinuousMode,
             AppSettingsKey.reactivationDelay,
-            AppSettingsKey.scrollStepLines
+            AppSettingsKey.scrollStepLines,
+            AppSettingsKey.cursorStepPixels
         ]
         for key in keys {
             defaults.removeObject(forKey: key)

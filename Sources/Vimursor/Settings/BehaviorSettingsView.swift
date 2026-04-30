@@ -29,6 +29,8 @@ final class BehaviorSettingsView: NSView {
     private let reactivationDelayStepper = NSStepper()
     private let scrollStepField = NSTextField()
     private let scrollStepStepper = NSStepper()
+    private let cursorStepField = NSTextField()
+    private let cursorStepStepper = NSStepper()
 
     // MARK: - Initialization
 
@@ -84,6 +86,19 @@ final class BehaviorSettingsView: NSView {
         scrollStepStepper.doubleValue = Double(settings.scrollStepLines)
         scrollStepStepper.target = self
         scrollStepStepper.action = #selector(scrollStepChanged(_:))
+
+        // Cursor Step Pixels
+        cursorStepField.stringValue = "\(settings.cursorStepPixels)"
+        cursorStepField.isEditable = false
+        cursorStepField.isBordered = true
+        cursorStepField.alignment = .right
+
+        cursorStepStepper.minValue = 1
+        cursorStepStepper.maxValue = 100
+        cursorStepStepper.increment = 1
+        cursorStepStepper.doubleValue = Double(settings.cursorStepPixels)
+        cursorStepStepper.target = self
+        cursorStepStepper.action = #selector(cursorStepChanged(_:))
     }
 
     private func setupLayout() {
@@ -92,7 +107,8 @@ final class BehaviorSettingsView: NSView {
             ("Hint Characters:", [hintCharSetField]),
             ("Continuous Hint Mode:", [continuousModeCheckbox]),
             ("Reactivation Delay (s):", [reactivationDelayField, reactivationDelayStepper]),
-            ("Scroll Step Lines:", [scrollStepField, scrollStepStepper])
+            ("Scroll Step Lines:", [scrollStepField, scrollStepStepper]),
+            ("Cursor Step (px):", [cursorStepField, cursorStepStepper])
         ]
 
         for (index, row) in rows.enumerated() {
@@ -184,6 +200,12 @@ final class BehaviorSettingsView: NSView {
         settings.scrollStepLines = value
     }
 
+    @objc private func cursorStepChanged(_ sender: NSStepper) {
+        let value = Int(sender.doubleValue)
+        cursorStepField.stringValue = "\(value)"
+        settings.cursorStepPixels = value
+    }
+
     // MARK: - Public
 
     /// 設定の現在値をコントロールに反映する（Reset 後などに使用）。
@@ -195,6 +217,8 @@ final class BehaviorSettingsView: NSView {
         reactivationDelayField.stringValue = String(format: "%.1f", settings.reactivationDelay)
         scrollStepStepper.doubleValue = Double(settings.scrollStepLines)
         scrollStepField.stringValue = "\(settings.scrollStepLines)"
+        cursorStepStepper.doubleValue = Double(settings.cursorStepPixels)
+        cursorStepField.stringValue = "\(settings.cursorStepPixels)"
     }
 }
 
