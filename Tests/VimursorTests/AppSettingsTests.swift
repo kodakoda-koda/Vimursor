@@ -159,6 +159,33 @@ struct AppSettingsTests {
         #expect(settings.labelBackgroundColor == AppSettings.Defaults.labelBackgroundColor)
     }
 
+    // MARK: - labelAlignment
+
+    @Test("labelAlignment のデフォルト値は .left")
+    func defaultLabelAlignment() {
+        let settings = makeSettings()
+        #expect(settings.labelAlignment == .left)
+    }
+
+    @Test("labelAlignment の書き込みと読み出し、および無効値フォールバック")
+    func readWriteLabelAlignment() {
+        let settings = makeSettings()
+        settings.labelAlignment = .center
+        #expect(settings.labelAlignment == .center)
+
+        // 無効な rawValue を直接書き込んだ場合は .left にフォールバックする
+        settings.defaults.set("invalid", forKey: AppSettingsKey.labelAlignment)
+        #expect(settings.labelAlignment == .left)
+    }
+
+    @Test("resetToDefaults() で labelAlignment が .left に戻ること")
+    func resetLabelAlignment() {
+        let settings = makeSettings()
+        settings.labelAlignment = .right
+        settings.resetToDefaults()
+        #expect(settings.labelAlignment == .left)
+    }
+
     // MARK: - isContinuousMode キー互換性
 
     @Test("isContinuousMode は HintModeSettings と同じ UserDefaults キーを使う")

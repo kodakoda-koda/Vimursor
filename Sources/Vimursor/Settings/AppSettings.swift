@@ -1,5 +1,13 @@
 import AppKit
 
+// MARK: - HintLabelAlignment
+
+enum HintLabelAlignment: String, Sendable, CaseIterable {
+    case left
+    case center
+    case right
+}
+
 // MARK: - UserDefaults キー定数
 
 enum AppSettingsKey {
@@ -9,6 +17,7 @@ enum AppSettingsKey {
     static let labelBackgroundColor = "appearance.labelBackgroundColor"
     static let labelBackgroundOpacity = "appearance.labelBackgroundOpacity"
     static let searchBarOpacity = "appearance.searchBarOpacity"
+    static let labelAlignment = "appearance.labelAlignment"
 
     // Behavior
     static let hintCharacterSet = "behavior.hintCharacterSet"
@@ -31,6 +40,7 @@ final class AppSettings: @unchecked Sendable {
         static let labelBackgroundColor: NSColor = .white
         static let labelBackgroundOpacity: CGFloat = 0.95
         static let searchBarOpacity: CGFloat = 1.0
+        static let labelAlignment: String = HintLabelAlignment.left.rawValue
         static let hintCharacterSet: String = "fjrieodkslapnvmc"
         static let isContinuousMode: Bool = false
         static let reactivationDelay: TimeInterval = 0.3
@@ -53,6 +63,7 @@ final class AppSettings: @unchecked Sendable {
             AppSettingsKey.labelFontSize: Defaults.labelFontSize,
             AppSettingsKey.labelBackgroundOpacity: Defaults.labelBackgroundOpacity,
             AppSettingsKey.searchBarOpacity: Defaults.searchBarOpacity,
+            AppSettingsKey.labelAlignment: Defaults.labelAlignment,
             AppSettingsKey.hintCharacterSet: Defaults.hintCharacterSet,
             AppSettingsKey.isContinuousMode: Defaults.isContinuousMode,
             AppSettingsKey.reactivationDelay: Defaults.reactivationDelay,
@@ -91,6 +102,14 @@ final class AppSettings: @unchecked Sendable {
         set { defaults.set(Double(newValue), forKey: AppSettingsKey.searchBarOpacity) }
     }
 
+    var labelAlignment: HintLabelAlignment {
+        get {
+            let raw = defaults.string(forKey: AppSettingsKey.labelAlignment) ?? Defaults.labelAlignment
+            return HintLabelAlignment(rawValue: raw) ?? .left
+        }
+        set { defaults.set(newValue.rawValue, forKey: AppSettingsKey.labelAlignment) }
+    }
+
     // MARK: - Behavior
 
     var hintCharacterSet: String {
@@ -123,6 +142,7 @@ final class AppSettings: @unchecked Sendable {
             AppSettingsKey.labelBackgroundColor,
             AppSettingsKey.labelBackgroundOpacity,
             AppSettingsKey.searchBarOpacity,
+            AppSettingsKey.labelAlignment,
             AppSettingsKey.hintCharacterSet,
             AppSettingsKey.isContinuousMode,
             AppSettingsKey.reactivationDelay,
