@@ -40,10 +40,10 @@ struct AppSettingsTests {
         #expect(settings.hintCharacterSet == "fjrieodkslapnvmc")
     }
 
-    @Test("isContinuousMode のデフォルト値は true")
+    @Test("isContinuousMode のデフォルト値は false")
     func defaultIsContinuousMode() {
         let settings = makeSettings()
-        #expect(settings.isContinuousMode == true)
+        #expect(settings.isContinuousMode == false)
     }
 
     @Test("reactivationDelay のデフォルト値は 0.3")
@@ -173,10 +173,10 @@ struct AppSettingsTests {
     @Test("toggleContinuousMode() で isContinuousMode が反転すること")
     func toggleContinuousMode() {
         let settings = makeSettings()
-        #expect(settings.isContinuousMode == true)
-        settings.toggleContinuousMode()
         #expect(settings.isContinuousMode == false)
         settings.toggleContinuousMode()
         #expect(settings.isContinuousMode == true)
+        settings.toggleContinuousMode()
+        #expect(settings.isContinuousMode == false)
     }
 }
