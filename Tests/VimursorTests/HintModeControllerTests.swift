@@ -126,6 +126,65 @@ struct HintModeControllerTests {
         #expect(overlay.showCallCount <= 1)
     }
 
+    // MARK: - 修飾キー付きクリック
+
+    @Test func cmdModifierPassesCommandClick() async throws {
+        let axRef = AXUIElementCreateSystemWide()
+        let axElement = AXElement(ref: axRef)
+        let info = UIElementInfo(
+            frame: CGRect(x: 100, y: 100, width: 50, height: 20),
+            label: "a",
+            axElement: axElement
+        )
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [info])
+        fetcher.clickableElements = [axElement]
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        guard hotkey.keyEventHandler != nil else { return }
+
+        hotkey.simulateKey(0, flags: .maskCommand)  // keyCode 0 = "a"
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(fetcher.lastClickModifier == .commandClick)
+    }
+
+    @Test func shiftModifierPassesRightClick() async throws {
+        let axRef = AXUIElementCreateSystemWide()
+        let axElement = AXElement(ref: axRef)
+        let info = UIElementInfo(
+            frame: CGRect(x: 100, y: 100, width: 50, height: 20),
+            label: "a",
+            axElement: axElement
+        )
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [info])
+        fetcher.clickableElements = [axElement]
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        guard hotkey.keyEventHandler != nil else { return }
+
+        hotkey.simulateKey(0, flags: .maskShift)
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(fetcher.lastClickModifier == .rightClick)
+    }
+
+    @Test func noModifierPassesLeftClick() async throws {
+        let axRef = AXUIElementCreateSystemWide()
+        let axElement = AXElement(ref: axRef)
+        let info = UIElementInfo(
+            frame: CGRect(x: 100, y: 100, width: 50, height: 20),
+            label: "a",
+            axElement: axElement
+        )
+        let (controller, overlay, hotkey, fetcher) = makeSUT(elements: [info])
+        fetcher.clickableElements = [axElement]
+        controller.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        try await Task.sleep(for: .milliseconds(50))
+        guard hotkey.keyEventHandler != nil else { return }
+
+        hotkey.simulateKey(0, flags: [])
+        try await Task.sleep(for: .milliseconds(100))
+        #expect(fetcher.lastClickModifier == .leftClick)
+    }
+
     // MARK: - ESC キーで deactivate される
 
     @Test func escKeyDeactivates() async throws {

@@ -32,7 +32,7 @@ final class AppSettings: @unchecked Sendable {
         static let labelBackgroundOpacity: CGFloat = 0.95
         static let searchBarOpacity: CGFloat = 1.0
         static let hintCharacterSet: String = "fjrieodkslapnvmc"
-        static let isContinuousMode: Bool = true
+        static let isContinuousMode: Bool = false
         static let reactivationDelay: TimeInterval = 0.3
         static let scrollStepLines: Int = 3
     }
