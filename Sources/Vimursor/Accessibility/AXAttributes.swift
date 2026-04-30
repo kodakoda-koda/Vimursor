@@ -3,6 +3,9 @@ import AppKit
 /// AXUIElement の属性取得を安全に行う共通ユーティリティ。
 /// 座標は AX スクリーン座標系（原点:左上）で返す。
 enum AXAttributes {
+    /// 属性未サポート時に NSNull を返し、残りの属性取得を続行するオプション。
+    static let continueOnError = AXCopyMultipleAttributeOptions(rawValue: 0)
+
     /// AXUIElement の AXPosition + AXSize から CGRect を取得する。
     /// AXUIElementCopyMultipleAttributeValues で1 IPC にまとめて取得する。
     /// - Returns: AX座標（原点:左上）の CGRect。取得失敗時は nil。
@@ -11,7 +14,7 @@ enum AXAttributes {
         let err = AXUIElementCopyMultipleAttributeValues(
             element,
             ["AXPosition", "AXSize"] as CFArray,
-            AXCopyMultipleAttributeOptions(rawValue: 0),
+            AXAttributes.continueOnError,
             &values
         )
         guard err == .success,

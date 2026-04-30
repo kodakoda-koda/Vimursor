@@ -53,6 +53,7 @@ enum ScrollEngine {
         let pixelsPerEvent: Int32 = 5_000
         let eventCount = 10
         let pixels = direction == .up ? pixelsPerEvent : -pixelsPerEvent
+        let source = CGEventSource(stateID: .combinedSessionState)
 
         // cancel() でキャンセルフラグを立てるためのセンチネル
         let sentinel = DispatchWorkItem { }
@@ -60,7 +61,7 @@ enum ScrollEngine {
             DispatchQueue.global().asyncAfter(deadline: .now() + Double(i) * 0.02) {
                 guard !sentinel.isCancelled else { return }
                 let event = CGEvent(
-                    scrollWheelEvent2Source: nil,
+                    scrollWheelEvent2Source: source,
                     units: .pixel,
                     wheelCount: 1,
                     wheel1: pixels,

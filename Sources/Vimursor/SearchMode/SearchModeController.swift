@@ -199,19 +199,20 @@ final class SearchModeController {
         guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 
         let newInput = input + char
-        let filtered = zip(labels, matched).filter { label, _ in
-            label.hasPrefix(newInput)
+        var exactMatchFrame: CGRect?
+        var hasPrefixMatch = false
+
+        for (label, element) in zip(labels, matched) {
+            if label == newInput {
+                exactMatchFrame = element.frame
+                break
+            }
+            if label.hasPrefix(newInput) {
+                hasPrefixMatch = true
+            }
         }
 
-        if filtered.isEmpty {
-            // マッチなし → deactivate
-            deactivate()
-            return
-        }
-
-        // 完全一致チェック
-        if let exactMatch = filtered.first(where: { label, _ in label == newInput }) {
-            let frame = exactMatch.1.frame
+        if let frame = exactMatchFrame {
             deactivate()
             Task { @MainActor [weak self] in
                 do {
@@ -221,6 +222,12 @@ final class SearchModeController {
                 }
                 self?.elementFetcher.clickAt(frame: frame)
             }
+            return
+        }
+
+        if !hasPrefixMatch {
+            // マッチなし → deactivate
+            deactivate()
             return
         }
 

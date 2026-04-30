@@ -81,6 +81,12 @@ enum UIElementEnumerator {
         return enabled
     }
 
+    /// テキスト属性のうち、空白のみでない値が1つでもあるかを判定する。
+    /// テスト用に公開。
+    static func hasNonEmptyText(title: String, label: String, description: String) -> Bool {
+        [title, label, description].contains { !$0.isEmpty && $0.contains { !$0.isWhitespace } }
+    }
+
     static func enumerateSearchableElements(root: AXUIElement) -> [SearchableElementData] {
         var result: [SearchableElementData] = []
         collectVisible(element: root, into: &result, depth: 0)
@@ -103,7 +109,7 @@ enum UIElementEnumerator {
         if AXUIElementCopyMultipleAttributeValues(
             element,
             ["AXTitle", "AXLabel", "AXDescription", "AXRole"] as CFArray,
-            AXCopyMultipleAttributeOptions(rawValue: 0),
+            AXAttributes.continueOnError,
             &valuesRef
         ) == .success, let attrs = valuesRef as? [Any], attrs.count == 4 {
             let title = (attrs[0] as? String) ?? ""
@@ -111,8 +117,7 @@ enum UIElementEnumerator {
             let desc  = (attrs[2] as? String) ?? ""
             let role  = (attrs[3] as? String) ?? ""
 
-            let hasText = [title, label, desc].contains { !$0.isEmpty && $0.contains { !$0.isWhitespace } }
-            if hasText {
+            if hasNonEmptyText(title: title, label: label, description: desc) {
                 result.append(SearchableElementData(
                     element: element, title: title, label: label, description: desc, role: role
                 ))
