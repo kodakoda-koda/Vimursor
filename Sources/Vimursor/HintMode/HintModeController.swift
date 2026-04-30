@@ -108,8 +108,8 @@ final class HintModeController {
             return
         }
 
-        // 修飾キー付きは無視（Cmd+Tab等）
-        guard flags.isDisjoint(with: [.maskCommand, .maskControl, .maskAlternate]) else { return }
+        // 修飾キーから ClickModifier を決定（Shift→右クリック, Cmd→Cmd+クリック等）
+        let clickModifier = ClickModifier.from(flags: flags)
 
         guard let char = KeyCodeMapping.charFromKeyCode(keyCode) else { return }
 
@@ -122,7 +122,7 @@ final class HintModeController {
         }
 
         if let exact = matches.first(where: { $0.label == newInput }) {
-            performClick(frame: exact.frame)
+            performClick(frame: exact.frame, modifier: clickModifier)
             return
         }
 
@@ -130,15 +130,15 @@ final class HintModeController {
         hintView?.update(hints: hints, inputPrefix: newInput)
     }
 
-    private func performClick(frame: CGRect) {
+    private func performClick(frame: CGRect, modifier: ClickModifier) {
         if settings.isContinuousMode {
-            performContinuousClick(frame: frame)
+            performContinuousClick(frame: frame, modifier: modifier)
         } else {
-            performSingleClick(frame: frame)
+            performSingleClick(frame: frame, modifier: modifier)
         }
     }
 
-    private func performContinuousClick(frame: CGRect) {
+    private func performContinuousClick(frame: CGRect, modifier: ClickModifier) {
         enterRestartingState()
         Task { @MainActor [weak self] in
             do {
@@ -148,12 +148,12 @@ final class HintModeController {
             }
             guard let self else { return }
             guard case .restarting = self.state else { return }  // ESCでdeactivateされていたら中断
-            self.elementFetcher.clickAt(frame: frame)
+            self.elementFetcher.clickAt(frame: frame, modifier: modifier)
             self.scheduleReactivation()
         }
     }
 
-    private func performSingleClick(frame: CGRect) {
+    private func performSingleClick(frame: CGRect, modifier: ClickModifier) {
         // 単発モード: オーバーレイ非表示後にクリック送信
         deactivate()
         Task { @MainActor [weak self] in
@@ -162,7 +162,7 @@ final class HintModeController {
             } catch is CancellationError {
                 return
             }
-            self?.elementFetcher.clickAt(frame: frame)
+            self?.elementFetcher.clickAt(frame: frame, modifier: modifier)
         }
     }
 
