@@ -17,6 +17,7 @@ struct LabelGenerator {
 
         // count が多い場合は全部2文字ラベル（最大 N×N）
         var labels: [String] = []
+        labels.reserveCapacity(clampedCount)
         for first in chars {
             for second in chars {
                 guard labels.count < clampedCount else { break }

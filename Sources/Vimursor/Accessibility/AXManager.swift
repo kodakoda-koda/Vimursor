@@ -19,9 +19,16 @@ struct SearchElementInfo: Sendable {
     let description: String
     let role: String
     let axElement: AXElement
+    let searchableText: String
 
-    var searchableText: String {
-        [title, label, description, role]
+    init(frame: CGRect, title: String, label: String, description: String, role: String, axElement: AXElement) {
+        self.frame = frame
+        self.title = title
+        self.label = label
+        self.description = description
+        self.role = role
+        self.axElement = axElement
+        self.searchableText = [title, label, description, role]
             .filter { !$0.isEmpty }
             .joined(separator: " ")
             .lowercased()
@@ -67,21 +74,15 @@ final class AXManager: @unchecked Sendable {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         DispatchQueue.global(qos: .userInitiated).async {
             let elements = UIElementEnumerator.enumerateSearchableElements(root: wrapped.ref)
-            let infos = elements.compactMap { el -> SearchElementInfo? in
-                guard let frame = self.fetchFrame(element: el, screenHeight: screenHeight) else { return nil }
-                func str(_ key: String) -> String {
-                    var ref: CFTypeRef?
-                    guard AXUIElementCopyAttributeValue(el, key as CFString, &ref) == .success,
-                          let s = ref as? String else { return "" }
-                    return s
-                }
+            let infos = elements.compactMap { data -> SearchElementInfo? in
+                guard let frame = self.fetchFrame(element: data.element, screenHeight: screenHeight) else { return nil }
                 return SearchElementInfo(
                     frame: frame,
-                    title: str("AXTitle"),
-                    label: str("AXLabel"),
-                    description: str("AXDescription"),
-                    role: str("AXRole"),
-                    axElement: AXElement(ref: el)
+                    title: data.title,
+                    label: data.label,
+                    description: data.description,
+                    role: data.role,
+                    axElement: AXElement(ref: data.element)
                 )
             }
             DispatchQueue.main.async { completion(infos) }

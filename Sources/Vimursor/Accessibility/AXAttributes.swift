@@ -3,15 +3,26 @@ import AppKit
 /// AXUIElement の属性取得を安全に行う共通ユーティリティ。
 /// 座標は AX スクリーン座標系（原点:左上）で返す。
 enum AXAttributes {
+    /// 属性未サポート時に NSNull を返し、残りの属性取得を続行するオプション。
+    static let continueOnError = AXCopyMultipleAttributeOptions(rawValue: 0)
+
     /// AXUIElement の AXPosition + AXSize から CGRect を取得する。
+    /// AXUIElementCopyMultipleAttributeValues で1 IPC にまとめて取得する。
     /// - Returns: AX座標（原点:左上）の CGRect。取得失敗時は nil。
     static func frame(of element: AXUIElement) -> CGRect? {
-        var posRef: CFTypeRef?
-        var sizeRef: CFTypeRef?
-        guard AXUIElementCopyAttributeValue(element, "AXPosition" as CFString, &posRef) == .success,
-              AXUIElementCopyAttributeValue(element, "AXSize" as CFString, &sizeRef) == .success,
-              let posRef, let sizeRef else { return nil }
-        return rectFromValues(positionValue: posRef, sizeValue: sizeRef)
+        var values: CFArray?
+        let err = AXUIElementCopyMultipleAttributeValues(
+            element,
+            ["AXPosition", "AXSize"] as CFArray,
+            AXAttributes.continueOnError,
+            &values
+        )
+        guard err == .success,
+              let arr = values as? [Any],
+              arr.count == 2,
+              !(arr[0] is NSNull),
+              !(arr[1] is NSNull) else { return nil }
+        return rectFromValues(positionValue: arr[0] as CFTypeRef, sizeValue: arr[1] as CFTypeRef)
     }
 
     /// CFTypeRef から CGRect を構築する純粋ロジック（テスト用に分離）。

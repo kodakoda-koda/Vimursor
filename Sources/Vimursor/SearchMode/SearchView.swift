@@ -57,6 +57,8 @@ final class SearchView: NSView {
 
     /// selecting 状態のデータ（nil = searching 状態）
     private var selectingData: SelectingData?
+    private var matchAttrs: [NSAttributedString.Key: Any] = [:]
+    private var noMatchAttrs: [NSAttributedString.Key: Any] = [:]
 
     // ブラー効果付きフローティングバーのコンテナ
     private let blurContainer: NSVisualEffectView
@@ -212,6 +214,9 @@ final class SearchView: NSView {
     /// selecting 状態に入る時・ラベル入力更新時に呼ぶ
     func updateForSelecting(matched: [SearchElementInfo], labels: [String], input: String) {
         selectingData = SelectingData(matched: matched, labels: labels, input: input)
+        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
+        matchAttrs = [.font: font, .foregroundColor: settings.labelTextColor]
+        noMatchAttrs = [.font: font, .foregroundColor: NSColor.gray]
         searchField.isEditable = false
         selectingOverlay.isHidden = false
         unfocusSearchField()
@@ -266,12 +271,7 @@ final class SearchView: NSView {
     }
 
     private func drawLabel(label: String, frame: CGRect, isMatch: Bool) {
-        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
-        let textColor: NSColor = isMatch ? settings.labelTextColor : .gray
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: textColor
-        ]
+        let attrs = isMatch ? matchAttrs : noMatchAttrs
 
         let size = (label as NSString).size(withAttributes: attrs)
         let padding = LabelStyle.padding

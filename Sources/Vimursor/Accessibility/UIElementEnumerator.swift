@@ -1,5 +1,14 @@
 import AppKit
 
+/// 検索モード用の要素データ（AX属性を1パスで取得済み）
+struct SearchableElementData {
+    let element: AXUIElement
+    let title: String
+    let label: String
+    let description: String
+    let role: String
+}
+
 private enum Limits {
     /// クリック可能要素探索の最大深さ（無限再帰防止）
     static let clickableMaxDepth = 25
@@ -72,15 +81,21 @@ enum UIElementEnumerator {
         return enabled
     }
 
-    static func enumerateSearchableElements(root: AXUIElement) -> [AXUIElement] {
-        var result: [AXUIElement] = []
+    /// テキスト属性のうち、空白のみでない値が1つでもあるかを判定する。
+    /// テスト用に公開。
+    static func hasNonEmptyText(title: String, label: String, description: String) -> Bool {
+        [title, label, description].contains { !$0.isEmpty && $0.contains { !$0.isWhitespace } }
+    }
+
+    static func enumerateSearchableElements(root: AXUIElement) -> [SearchableElementData] {
+        var result: [SearchableElementData] = []
         collectVisible(element: root, into: &result, depth: 0)
         return result
     }
 
     private static func collectVisible(
         element: AXUIElement,
-        into result: inout [AXUIElement],
+        into result: inout [SearchableElementData],
         depth: Int
     ) {
         guard depth < Limits.searchableMaxDepth, result.count < Limits.searchableMaxCount else { return }
@@ -89,14 +104,25 @@ enum UIElementEnumerator {
         if AXUIElementCopyAttributeValue(element, "AXHidden" as CFString, &hiddenRef) == .success,
            let hidden = hiddenRef as? Bool, hidden { return }
 
-        let searchKeys = ["AXTitle", "AXLabel", "AXDescription"]
-        let hasText = searchKeys.contains { key in
-            var ref: CFTypeRef?
-            guard AXUIElementCopyAttributeValue(element, key as CFString, &ref) == .success,
-                  let s = ref as? String else { return false }
-            return !s.trimmingCharacters(in: .whitespaces).isEmpty
+        // AXTitle, AXLabel, AXDescription, AXRole を 1 IPC でバッチ取得
+        var valuesRef: CFArray?
+        if AXUIElementCopyMultipleAttributeValues(
+            element,
+            ["AXTitle", "AXLabel", "AXDescription", "AXRole"] as CFArray,
+            AXAttributes.continueOnError,
+            &valuesRef
+        ) == .success, let attrs = valuesRef as? [Any], attrs.count == 4 {
+            let title = (attrs[0] as? String) ?? ""
+            let label = (attrs[1] as? String) ?? ""
+            let desc  = (attrs[2] as? String) ?? ""
+            let role  = (attrs[3] as? String) ?? ""
+
+            if hasNonEmptyText(title: title, label: label, description: desc) {
+                result.append(SearchableElementData(
+                    element: element, title: title, label: label, description: desc, role: role
+                ))
+            }
         }
-        if hasText { result.append(element) }
 
         var childrenRef: CFTypeRef?
         let err = AXUIElementCopyAttributeValue(element, "AXChildren" as CFString, &childrenRef)

@@ -14,6 +14,8 @@ final class HintView: NSView {
     private var hints: [UIElementInfo] = []
     private var inputPrefix: String = ""
     private let settings: AppSettings
+    private var matchAttrs: [NSAttributedString.Key: Any] = [:]
+    private var noMatchAttrs: [NSAttributedString.Key: Any] = [:]
 
     init(frame: NSRect, settings: AppSettings = .shared) {
         self.settings = settings
@@ -27,6 +29,9 @@ final class HintView: NSView {
     func update(hints: [UIElementInfo], inputPrefix: String) {
         self.hints = hints
         self.inputPrefix = inputPrefix
+        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
+        matchAttrs = [.font: font, .foregroundColor: settings.labelTextColor]
+        noMatchAttrs = [.font: font, .foregroundColor: NSColor.gray]
         needsDisplay = true
     }
 
@@ -34,6 +39,8 @@ final class HintView: NSView {
         super.draw(dirtyRect)
 
         for hint in hints {
+            let expandedFrame = hint.frame.insetBy(dx: -50, dy: -50)
+            guard expandedFrame.intersects(dirtyRect) else { continue }
             let isMatch = inputPrefix.isEmpty || hint.label.hasPrefix(inputPrefix)
             drawLabel(hint: hint, isMatch: isMatch)
         }
@@ -61,12 +68,7 @@ final class HintView: NSView {
 
     private func drawLabel(hint: UIElementInfo, isMatch: Bool) {
         let label = hint.label
-        let font = NSFont.systemFont(ofSize: settings.labelFontSize, weight: .semibold)
-        let textColor: NSColor = isMatch ? settings.labelTextColor : .gray
-        let attrs: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: textColor
-        ]
+        let attrs = isMatch ? matchAttrs : noMatchAttrs
 
         let size = (label as NSString).size(withAttributes: attrs)
         let padding = HintLabelLayout.padding
