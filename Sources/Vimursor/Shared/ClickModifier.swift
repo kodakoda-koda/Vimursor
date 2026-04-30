@@ -11,10 +11,10 @@ enum ClickModifier: Sendable {
     /// CGEventFlags から ClickModifier を決定する。
     /// 複数修飾キーが同時に押された場合の優先順位: Cmd > Ctrl > Option > Shift
     static func from(flags: CGEventFlags) -> ClickModifier {
-        if flags.contains(.maskCommand)   { return .commandClick }
-        if flags.contains(.maskControl)   { return .controlClick }
+        if flags.contains(.maskCommand) { return .commandClick }
+        if flags.contains(.maskControl) { return .controlClick }
         if flags.contains(.maskAlternate) { return .optionClick }
-        if flags.contains(.maskShift)     { return .rightClick }
+        if flags.contains(.maskShift) { return .rightClick }
         return .leftClick
     }
 }
