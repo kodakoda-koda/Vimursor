@@ -23,6 +23,7 @@ final class ShortcutsSettingsView: NSView {
     private let hintModeRecorder = ShortcutRecorderField(for: .hintMode)
     private let searchModeRecorder = ShortcutRecorderField(for: .searchMode)
     private let scrollModeRecorder = ShortcutRecorderField(for: .scrollMode)
+    private let cursorModeRecorder = ShortcutRecorderField(for: .cursorMode)
 
     // MARK: - Initialization
 
@@ -40,7 +41,8 @@ final class ShortcutsSettingsView: NSView {
         let rows: [(String, ShortcutRecorderField)] = [
             ("Hint Mode:", hintModeRecorder),
             ("Search Mode:", searchModeRecorder),
-            ("Scroll Mode:", scrollModeRecorder)
+            ("Scroll Mode:", scrollModeRecorder),
+            ("Cursor Mode:", cursorModeRecorder)
         ]
 
         for (index, (labelText, recorder)) in rows.enumerated() {

@@ -7,6 +7,7 @@ final class HotkeyManager: @unchecked Sendable {
     var onHintModeActivated: (() -> Void)?
     var onSearchModeActivated: (() -> Void)?
     var onScrollModeActivated: (() -> Void)?
+    var onCursorModeActivated: (() -> Void)?
 
     // CGEventTap スレッド（読み取り）とメインスレッド（書き込み）をまたぐため NSLock で保護
     private let handlerLock = NSLock()

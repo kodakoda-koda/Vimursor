@@ -83,6 +83,26 @@ struct StatusBarControllerTests {
         #expect(scrollCalled == true)
     }
 
+    @Test("onCursorMode クロージャが呼ばれること")
+    @MainActor
+    func cursorModeCallbackIsInvoked() {
+        var cursorCalled = false
+        var otherCalled = false
+
+        let controller = StatusBarController(
+            statusItem: MockStatusItem(),
+            onHintMode: { otherCalled = true },
+            onSearchMode: { otherCalled = true },
+            onScrollMode: { otherCalled = true },
+            onCursorMode: { cursorCalled = true },
+            settings: makeSettings()
+        )
+
+        controller.simulateCursorMode()
+        #expect(cursorCalled == true)
+        #expect(otherCalled == false)
+    }
+
     @Test("onSettings クロージャが呼ばれること")
     @MainActor
     func settingsCallbackIsInvoked() {
@@ -110,9 +130,9 @@ struct StatusBarControllerTests {
             onScrollMode: {},
             settings: makeSettings()
         )
-        // Hint Mode, Search Mode, Scroll Mode, separator, Settings..., About, separator,
-        // Continuous Hint Mode, Launch at Login, separator, Quit = 11 items
-        #expect(mockItem.menu?.items.count == 11)
+        // Hint Mode, Search Mode, Scroll Mode, Cursor Mode, separator, Settings..., About, separator,
+        // Continuous Hint Mode, Launch at Login, separator, Quit = 12 items
+        #expect(mockItem.menu?.items.count == 12)
     }
 
     @Test("メニューに Continuous Hint Mode 項目が含まれること")
@@ -145,6 +165,7 @@ struct StatusBarControllerTests {
         #expect(titles.contains("Hint Mode"))
         #expect(titles.contains("Search Mode"))
         #expect(titles.contains("Scroll Mode"))
+        #expect(titles.contains("Cursor Mode"))
         #expect(titles.contains("Settings..."))
         #expect(titles.contains("About Vimursor"))
         #expect(titles.contains("Launch at Login"))

@@ -23,4 +23,10 @@ extension KeyboardShortcuts.Name {
         "scrollMode",
         default: .init(.j, modifiers: [.command, .shift])
     )
+
+    /// カーソルモード起動ショートカット（デフォルト: Cmd+Shift+K）
+    nonisolated(unsafe) static let cursorMode = Self(
+        "cursorMode",
+        default: .init(.k, modifiers: [.command, .shift])
+    )
 }

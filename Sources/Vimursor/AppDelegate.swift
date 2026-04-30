@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var hintModeController: HintModeController?
     private var searchModeController: SearchModeController?
     private var scrollModeController: ScrollModeController?
+    private var cursorModeController: CursorModeController?
     private var statusBarController: StatusBarController?
     private var settingsWindowController: SettingsWindowController?
     private var permissionMonitor: AccessibilityPermissionMonitor?
@@ -32,6 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         self.hintModeController = HintModeController(settings: appSettings)
         self.searchModeController = SearchModeController()
         self.scrollModeController = ScrollModeController()
+        self.cursorModeController = CursorModeController()
 
         // ログイン時起動マネージャを生成し、システム状態と同期する
         let loginManager = LoginItemManager()
@@ -48,6 +50,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             onHintMode: { [weak self] in self?.hotkeyManager?.onHintModeActivated?() },
             onSearchMode: { [weak self] in self?.hotkeyManager?.onSearchModeActivated?() },
             onScrollMode: { [weak self] in self?.hotkeyManager?.onScrollModeActivated?() },
+            onCursorMode: { [weak self] in self?.hotkeyManager?.onCursorModeActivated?() },
             onSettings: { [weak settingsController] in settingsController?.showSettingsWindow() },
             loginItemManager: loginManager,
             settings: appSettings
@@ -88,6 +91,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         KeyboardShortcuts.onKeyUp(for: .scrollMode) { [weak self] in
             self?.hotkeyManager?.onScrollModeActivated?()
         }
+        KeyboardShortcuts.onKeyUp(for: .cursorMode) { [weak self] in
+            self?.hotkeyManager?.onCursorModeActivated?()
+        }
     }
 
     // MARK: - HotkeyManager setup
@@ -118,6 +124,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
                   hotkey.keyEventHandler == nil else { return }
             AXManager.enableManualAccessibility()
             self.scrollModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
+        }
+        manager.onCursorModeActivated = { [weak self] in
+            guard let self,
+                  let overlay = self.overlayWindow,
+                  let hotkey = self.hotkeyManager,
+                  hotkey.keyEventHandler == nil else { return }
+            self.cursorModeController?.activate(overlayWindow: overlay, hotkeyManager: hotkey)
         }
         self.hotkeyManager = manager
         manager.start()
