@@ -34,6 +34,7 @@ final class AppearanceSettingsView: NSView {
     private let bgOpacityField = NSTextField()
     private let searchBarOpacitySlider = NSSlider()
     private let searchBarOpacityField = NSTextField()
+    private let alignmentSegment = NSSegmentedControl()
 
     // MARK: - Initialization
 
@@ -96,6 +97,15 @@ final class AppearanceSettingsView: NSView {
         searchBarOpacityField.isEditable = false
         searchBarOpacityField.isBordered = true
         searchBarOpacityField.alignment = .right
+
+        // Label Alignment
+        alignmentSegment.segmentCount = 3
+        alignmentSegment.setLabel("Left", forSegment: 0)
+        alignmentSegment.setLabel("Center", forSegment: 1)
+        alignmentSegment.setLabel("Right", forSegment: 2)
+        alignmentSegment.selectedSegment = segmentIndex(for: settings.labelAlignment)
+        alignmentSegment.target = self
+        alignmentSegment.action = #selector(alignmentChanged(_:))
     }
 
     private func setupLayout() {
@@ -104,7 +114,8 @@ final class AppearanceSettingsView: NSView {
             ("Text Color:", [textColorWell]),
             ("Background Color:", [backgroundColorWell]),
             ("Background Opacity:", [bgOpacitySlider, bgOpacityField]),
-            ("Search Bar Opacity:", [searchBarOpacitySlider, searchBarOpacityField])
+            ("Search Bar Opacity:", [searchBarOpacitySlider, searchBarOpacityField]),
+            ("Label Position:", [alignmentSegment])
         ]
 
         for (index, row) in rows.enumerated() {
@@ -159,6 +170,13 @@ final class AppearanceSettingsView: NSView {
                 stepper.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
             ])
             return Layout.stepperWidth + 4
+        case let segment as NSSegmentedControl:
+            NSLayoutConstraint.activate([
+                segment.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                segment.widthAnchor.constraint(equalToConstant: Layout.controlWidth),
+                segment.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return Layout.controlWidth + 4
         default:
             NSLayoutConstraint.activate([
                 control.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
@@ -167,6 +185,10 @@ final class AppearanceSettingsView: NSView {
             ])
             return Layout.valueFieldWidth + 4
         }
+    }
+
+    private func segmentIndex(for alignment: HintLabelAlignment) -> Int {
+        HintLabelAlignment.allCases.firstIndex(of: alignment) ?? 0
     }
 
     private func makeLabel(_ text: String) -> NSTextField {
@@ -203,6 +225,12 @@ final class AppearanceSettingsView: NSView {
         settings.searchBarOpacity = CGFloat(value)
     }
 
+    @objc private func alignmentChanged(_ sender: NSSegmentedControl) {
+        let index = sender.selectedSegment
+        guard HintLabelAlignment.allCases.indices.contains(index) else { return }
+        settings.labelAlignment = HintLabelAlignment.allCases[index]
+    }
+
     // MARK: - Public
 
     /// 設定の現在値をコントロールに反映する（Reset 後などに使用）。
@@ -215,5 +243,6 @@ final class AppearanceSettingsView: NSView {
         bgOpacityField.stringValue = String(format: "%.2f", settings.labelBackgroundOpacity)
         searchBarOpacitySlider.doubleValue = Double(settings.searchBarOpacity)
         searchBarOpacityField.stringValue = String(format: "%.2f", settings.searchBarOpacity)
+        alignmentSegment.selectedSegment = segmentIndex(for: settings.labelAlignment)
     }
 }

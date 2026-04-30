@@ -15,7 +15,7 @@ struct HintViewTests {
         // 期待 origin: (100, 220 - 10) = (100, 210)
         let frame = CGRect(x: 100, y: 200, width: 80, height: 40)
         let boxHeight: CGFloat = 20
-        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight)
+        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight, boxWidth: 0, alignment: .left)
         #expect(origin.x == 100)
         #expect(origin.y == 210)
     }
@@ -28,7 +28,7 @@ struct HintViewTests {
         // 期待 origin: (50, 105 - 10) = (50, 95)
         let frame = CGRect(x: 50, y: 100, width: 30, height: 10)
         let boxHeight: CGFloat = 20
-        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight)
+        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight, boxWidth: 0, alignment: .left)
         #expect(origin.x == 50)
         #expect(origin.y == 95)
     }
@@ -41,7 +41,7 @@ struct HintViewTests {
         // 期待 origin: (0, 25 - 8) = (0, 17)
         let frame = CGRect(x: 0, y: 0, width: 100, height: 50)
         let boxHeight: CGFloat = 16
-        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight)
+        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight, boxWidth: 0, alignment: .left)
         #expect(origin.x == 0)
         #expect(origin.y == 17)
     }
@@ -54,8 +54,44 @@ struct HintViewTests {
         // 期待 origin: (10, 40 - 11) = (10, 29)
         let frame = CGRect(x: 10, y: 10, width: 60, height: 60)
         let boxHeight: CGFloat = 22
-        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight)
+        let origin = HintView.labelOrigin(elementFrame: frame, boxHeight: boxHeight, boxWidth: 0, alignment: .left)
         #expect(origin.x == 10)
         #expect(origin.y == 29)
+    }
+
+    @Test("Left alignment: boxWidth があっても x は minX のまま")
+    func leftAlignmentIgnoresBoxWidth() {
+        let frame = CGRect(x: 100, y: 200, width: 80, height: 40)
+        let boxWidth: CGFloat = 30
+        let boxHeight: CGFloat = 20
+        let origin = HintView.labelOrigin(
+            elementFrame: frame, boxHeight: boxHeight, boxWidth: boxWidth, alignment: .left
+        )
+        #expect(origin.x == 100)
+        #expect(origin.y == 210)
+    }
+
+    @Test("Center alignment: x は midX - boxWidth/2")
+    func centerAlignment() {
+        let frame = CGRect(x: 100, y: 200, width: 80, height: 40)
+        let boxWidth: CGFloat = 30
+        let boxHeight: CGFloat = 20
+        let origin = HintView.labelOrigin(
+            elementFrame: frame, boxHeight: boxHeight, boxWidth: boxWidth, alignment: .center
+        )
+        #expect(origin.x == 125)
+        #expect(origin.y == 210)
+    }
+
+    @Test("Right alignment: x は maxX - boxWidth")
+    func rightAlignment() {
+        let frame = CGRect(x: 100, y: 200, width: 80, height: 40)
+        let boxWidth: CGFloat = 30
+        let boxHeight: CGFloat = 20
+        let origin = HintView.labelOrigin(
+            elementFrame: frame, boxHeight: boxHeight, boxWidth: boxWidth, alignment: .right
+        )
+        #expect(origin.x == 150)
+        #expect(origin.y == 210)
     }
 }
