@@ -135,20 +135,12 @@ final class CursorModeController {
         }
     }
 
+    private static let digitKeyCodeMap: [CGKeyCode: String] = [
+        29: "0", 18: "1", 19: "2", 20: "3", 21: "4",
+        23: "5", 22: "6", 26: "7", 28: "8", 25: "9"
+    ]
+
     private func digitFromKeyCode(_ keyCode: CGKeyCode) -> String? {
-        // Number row key codes (US keyboard)
-        switch keyCode {
-        case 29: return "0"
-        case 18: return "1"
-        case 19: return "2"
-        case 20: return "3"
-        case 21: return "4"
-        case 23: return "5"
-        case 22: return "6"
-        case 26: return "7"
-        case 28: return "8"
-        case 25: return "9"
-        default: return nil
-        }
+        Self.digitKeyCodeMap[keyCode]
     }
 }

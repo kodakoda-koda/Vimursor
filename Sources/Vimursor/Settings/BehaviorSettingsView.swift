@@ -102,7 +102,6 @@ final class BehaviorSettingsView: NSView {
     }
 
     private func setupLayout() {
-        // 各行: (ラベルテキスト, コントロール群)
         let rows: [(String, [NSView])] = [
             ("Hint Characters:", [hintCharSetField]),
             ("Continuous Hint Mode:", [continuousModeCheckbox]),
@@ -112,52 +111,54 @@ final class BehaviorSettingsView: NSView {
         ]
 
         for (index, row) in rows.enumerated() {
-            let label = makeLabel(row.0)
-            label.translatesAutoresizingMaskIntoConstraints = false
-            addSubview(label)
-
             let yOffset = Layout.margin + CGFloat(rows.count - 1 - index) * (Layout.rowHeight + Layout.rowSpacing)
+            addLabeledRow(title: row.0, controls: row.1, yOffset: yOffset)
+        }
+    }
 
+    private func addLabeledRow(title: String, controls: [NSView], yOffset: CGFloat) {
+        let label = makeLabel(title)
+        label.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(label)
+
+        let centerY = yOffset + Layout.rowHeight / 2
+        NSLayoutConstraint.activate([
+            label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.margin),
+            label.widthAnchor.constraint(equalToConstant: Layout.labelWidth),
+            label.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+        ])
+
+        var xOffset = Layout.margin + Layout.labelWidth + 8
+        for control in controls {
+            control.translatesAutoresizingMaskIntoConstraints = false
+            addSubview(control)
+            xOffset += layoutControl(control, xOffset: xOffset, centerY: centerY)
+        }
+    }
+
+    private func layoutControl(_ control: NSView, xOffset: CGFloat, centerY: CGFloat) -> CGFloat {
+        switch control {
+        case let stepper as NSStepper:
             NSLayoutConstraint.activate([
-                label.leadingAnchor.constraint(equalTo: leadingAnchor, constant: Layout.margin),
-                label.widthAnchor.constraint(equalToConstant: Layout.labelWidth),
-                label.centerYAnchor.constraint(equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2)
+                stepper.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                stepper.widthAnchor.constraint(equalToConstant: Layout.stepperWidth),
+                stepper.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
             ])
-
-            var xOffset = Layout.margin + Layout.labelWidth + 8
-            for control in row.1 {
-                control.translatesAutoresizingMaskIntoConstraints = false
-                addSubview(control)
-
-                switch control {
-                case let stepper as NSStepper:
-                    NSLayoutConstraint.activate([
-                        stepper.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        stepper.widthAnchor.constraint(equalToConstant: Layout.stepperWidth),
-                        stepper.centerYAnchor.constraint(
-                            equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2
-                        )
-                    ])
-                    xOffset += Layout.stepperWidth + 4
-                case let button as NSButton:
-                    NSLayoutConstraint.activate([
-                        button.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        button.centerYAnchor.constraint(
-                            equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2
-                        )
-                    ])
-                default:
-                    let fieldWidth: CGFloat = control === hintCharSetField ? 160 : Layout.valueFieldWidth
-                    NSLayoutConstraint.activate([
-                        control.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
-                        control.widthAnchor.constraint(equalToConstant: fieldWidth),
-                        control.centerYAnchor.constraint(
-                            equalTo: topAnchor, constant: yOffset + Layout.rowHeight / 2
-                        )
-                    ])
-                    xOffset += fieldWidth + 4
-                }
-            }
+            return Layout.stepperWidth + 4
+        case let button as NSButton:
+            NSLayoutConstraint.activate([
+                button.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                button.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return 0
+        default:
+            let fieldWidth: CGFloat = control === hintCharSetField ? 160 : Layout.valueFieldWidth
+            NSLayoutConstraint.activate([
+                control.leadingAnchor.constraint(equalTo: leadingAnchor, constant: xOffset),
+                control.widthAnchor.constraint(equalToConstant: fieldWidth),
+                control.centerYAnchor.constraint(equalTo: topAnchor, constant: centerY)
+            ])
+            return fieldWidth + 4
         }
     }
 
