@@ -118,8 +118,8 @@ final class AXManager: @unchecked Sendable {
         let up = CGEvent(mouseEventSource: nil, mouseType: upType,
                          mouseCursorPosition: point, mouseButton: button)
         if !flags.isEmpty {
-            down?.flags = flags
-            up?.flags = flags
+            down?.flags.formUnion(flags)
+            up?.flags.formUnion(flags)
         }
         down?.post(tap: .cghidEventTap)
         up?.post(tap: .cghidEventTap)
