@@ -88,13 +88,39 @@ final class AXManager: @unchecked Sendable {
         }
     }
 
-    func clickAt(frame: CGRect) {
+    func clickAt(frame: CGRect, modifier: ClickModifier) {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         let point = AXManager.centerScreenPoint(from: frame, screenHeight: screenHeight)
-        let down = CGEvent(mouseEventSource: nil, mouseType: .leftMouseDown,
-                           mouseCursorPosition: point, mouseButton: .left)
-        let up   = CGEvent(mouseEventSource: nil, mouseType: .leftMouseUp,
-                           mouseCursorPosition: point, mouseButton: .left)
+
+        switch modifier {
+        case .leftClick:
+            postMouseClick(point: point, downType: .leftMouseDown, upType: .leftMouseUp, button: .left)
+        case .commandClick:
+            postMouseClick(point: point, downType: .leftMouseDown, upType: .leftMouseUp, button: .left, flags: .maskCommand)
+        case .controlClick:
+            postMouseClick(point: point, downType: .leftMouseDown, upType: .leftMouseUp, button: .left, flags: .maskControl)
+        case .optionClick:
+            postMouseClick(point: point, downType: .leftMouseDown, upType: .leftMouseUp, button: .left, flags: .maskAlternate)
+        case .rightClick:
+            postMouseClick(point: point, downType: .rightMouseDown, upType: .rightMouseUp, button: .right)
+        }
+    }
+
+    private func postMouseClick(
+        point: CGPoint,
+        downType: CGEventType,
+        upType: CGEventType,
+        button: CGMouseButton,
+        flags: CGEventFlags = []
+    ) {
+        let down = CGEvent(mouseEventSource: nil, mouseType: downType,
+                           mouseCursorPosition: point, mouseButton: button)
+        let up = CGEvent(mouseEventSource: nil, mouseType: upType,
+                         mouseCursorPosition: point, mouseButton: button)
+        if !flags.isEmpty {
+            down?.flags = flags
+            up?.flags = flags
+        }
         down?.post(tap: .cghidEventTap)
         up?.post(tap: .cghidEventTap)
     }

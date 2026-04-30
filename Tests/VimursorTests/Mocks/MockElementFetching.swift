@@ -11,6 +11,7 @@ final class MockElementFetching: ElementFetching, @unchecked Sendable {
     // 呼び出し記録
     var clickAtCallCount = 0
     var lastClickedFrame: CGRect?
+    var lastClickModifier: ClickModifier?
     var fetchClickableCallCount = 0
     var fetchSearchableCallCount = 0
     var fetchScrollableCallCount = 0
@@ -43,8 +44,9 @@ final class MockElementFetching: ElementFetching, @unchecked Sendable {
         }
     }
 
-    func clickAt(frame: CGRect) {
+    func clickAt(frame: CGRect, modifier: ClickModifier) {
         clickAtCallCount += 1
         lastClickedFrame = frame
+        lastClickModifier = modifier
     }
 }
