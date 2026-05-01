@@ -191,7 +191,9 @@ final class ScrollModeController {
             return
         }
 
-        if handleNumberKey(keyCode: keyCode, areas: areas) { return }
+        if handleNumberKey(keyCode: keyCode, areas: areas) {
+            return
+        }
 
         handleScrollKey(keyCode: keyCode, targetPoint: areas[selectedIndex].centerPoint)
     }

@@ -39,7 +39,7 @@ final class HintModeController {
         }
         let appElement = AXUIElementCreateApplication(focusedApp.processIdentifier)
 
-        elementFetcher.fetchClickableElements(in: appElement) { [weak self] elements in
+        elementFetcher.fetchClickableElements(in: appElement) { [weak self] elementsWithFrames in
             Task { @MainActor [weak self] in
                 guard let self,
                       let overlay = self.overlayWindow,
@@ -47,13 +47,13 @@ final class HintModeController {
                     self?.state = .inactive
                     return
                 }
-                self.startHintMode(elements: elements, overlayWindow: overlay, hotkeyManager: hotkey)
+                self.startHintMode(elements: elementsWithFrames, overlayWindow: overlay, hotkeyManager: hotkey)
             }
         }
     }
 
     private func startHintMode(
-        elements: [AXElement],
+        elements: [(AXElement, CGRect)],
         overlayWindow: any OverlayProviding,
         hotkeyManager: any KeyEventHandling
     ) {

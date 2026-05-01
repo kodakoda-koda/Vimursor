@@ -29,6 +29,7 @@ final class CursorModeController {
 
         overlayWindow.contentView?.addSubview(view)
         cursorView = view
+
         overlayWindow.show()
 
         // Set key event handler

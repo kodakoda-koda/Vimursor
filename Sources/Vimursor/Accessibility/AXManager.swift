@@ -36,26 +36,36 @@ struct SearchElementInfo: Sendable {
 }
 
 final class AXManager: @unchecked Sendable {
-    /// バックグラウンドで列挙し、メインスレッドで completion を呼ぶ
-    func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([AXElement]) -> Void) {
+    /// バックグラウンドで列挙・フレーム取得・座標変換を完了し、メインスレッドで completion を呼ぶ。
+    /// CGRect は AX座標（原点:左上）→ NSWindow 座標（原点:左下）変換済み。
+    func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([(AXElement, CGRect)]) -> Void) {
         let wrapped = AXElement(ref: app)
+        // screenHeight はメインスレッドで取得してからBGへ渡す
+        let screenHeight = NSScreen.main?.frame.height ?? 0
         DispatchQueue.global(qos: .userInitiated).async {
             let elements = UIElementEnumerator.enumerateClickableElements(root: wrapped.ref)
-            let axElements = elements.map { AXElement(ref: $0) }
+
+            // フレーム取得・座標変換をバックグラウンドで完了（buildUIElementInfos での再取得を不要にする）
+            let axElementsWithFrames = elements.compactMap { element -> (AXElement, CGRect)? in
+                guard let axFrame = AXAttributes.frame(of: element) else { return nil }
+                let convertedY = screenHeight - axFrame.origin.y - axFrame.size.height
+                let frame = CGRect(x: axFrame.origin.x, y: convertedY,
+                                   width: axFrame.size.width, height: axFrame.size.height)
+                return (AXElement(ref: element), frame)
+            }
+
             DispatchQueue.main.async {
-                completion(axElements)
+                completion(axElementsWithFrames)
             }
         }
     }
 
     @MainActor
-    func buildUIElementInfos(elements: [AXElement], labels: [String]) -> [UIElementInfo] {
-        let screenHeight = NSScreen.main?.frame.height ?? 0
+    func buildUIElementInfos(elements: [(AXElement, CGRect)], labels: [String]) -> [UIElementInfo] {
         var infos: [UIElementInfo] = []
 
-        for (index, element) in elements.enumerated() {
+        for (index, (element, frame)) in elements.enumerated() {
             guard index < labels.count else { break }
-            guard let frame = fetchFrame(element: element.ref, screenHeight: screenHeight) else { continue }
             infos.append(UIElementInfo(
                 frame: frame,
                 label: labels[index],
@@ -74,6 +84,7 @@ final class AXManager: @unchecked Sendable {
         let screenHeight = NSScreen.main?.frame.height ?? 0
         DispatchQueue.global(qos: .userInitiated).async {
             let elements = UIElementEnumerator.enumerateSearchableElements(root: wrapped.ref)
+
             let infos = elements.compactMap { data -> SearchElementInfo? in
                 guard let frame = self.fetchFrame(element: data.element, screenHeight: screenHeight) else { return nil }
                 return SearchElementInfo(
@@ -144,8 +155,8 @@ final class AXManager: @unchecked Sendable {
         }
     }
 
-    /// NSWindow 座標系（原点:左下）の frame をスクリーン座標系（原点:左上）の中心点に変換する
-    /// テスト用に static で公開
+    /// NSWindow 座標系（原点:左下）の frame をスクリーン座標系（原点:左上）の中心点に変換する。
+    /// テストからの検証用に public で公開。プロダクションコードでは使用しないこと。
     static func centerScreenPoint(from frame: CGRect, screenHeight: CGFloat) -> CGPoint {
         CGPoint(
             x: frame.origin.x + frame.width / 2,

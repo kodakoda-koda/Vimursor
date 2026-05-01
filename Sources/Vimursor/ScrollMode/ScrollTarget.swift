@@ -98,7 +98,6 @@ enum ScrollTarget {
         let childrenAdded = result.count > countBefore
 
         if selfIsScrollable, let f = frame, !childrenAdded {
-            // リーフ: そのまま追加
             let center = CGPoint(x: f.midX, y: f.midY)
             let label = String(result.count + 1)
             result.append(ScrollAreaInfo(frame: f, centerPoint: center, label: label))
