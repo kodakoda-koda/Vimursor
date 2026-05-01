@@ -16,15 +16,16 @@ final class MockElementFetching: ElementFetching, @unchecked Sendable {
     var fetchSearchableCallCount = 0
     var fetchScrollableCallCount = 0
 
-    func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([AXElement]) -> Void) {
+    func fetchClickableElements(in app: AXUIElement, completion: @escaping @Sendable ([(AXElement, CGRect)]) -> Void) {
         fetchClickableCallCount += 1
-        let elements = clickableElements
+        // clickableElements にダミーフレームを付けてタプルに変換
+        let elementsWithFrames = clickableElements.map { ($0, CGRect(x: 0, y: 0, width: 50, height: 20)) }
         DispatchQueue.main.async {
-            completion(elements)
+            completion(elementsWithFrames)
         }
     }
 
-    @MainActor func buildUIElementInfos(elements: [AXElement], labels: [String]) -> [UIElementInfo] {
+    @MainActor func buildUIElementInfos(elements: [(AXElement, CGRect)], labels: [String]) -> [UIElementInfo] {
         return uiElementInfos
     }
 
