@@ -249,6 +249,13 @@ kbd {
   color: var(--text-light);
 }
 
+.shortcuts-note {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+}
+
 kbd {
   display: inline-block;
   background-color: var(--kbd-bg);
