@@ -1,0 +1,384 @@
+/* ===========================
+   Vimursor — Everforest Light
+   =========================== */
+
+/* Color tokens */
+:root {
+  --bg:           #FDF6E3;
+  --bg-alt:       #F4F0D9;
+  --text:         #5C6A72;
+  --text-light:   #829181;
+  --accent:       #8DA101;
+  --accent-hover: #7A8C01;
+  --link:         #3A94C5;
+  --white:        #ffffff;
+  --border:       #D5CEA3;
+  --kbd-bg:       #E8E2C8;
+}
+
+/* ===========================
+   Reset & Base
+   =========================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code,
+pre,
+kbd {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+}
+
+/* ===========================
+   Hero
+   =========================== */
+
+.hero {
+  text-align: center;
+  padding: 5rem 1.5rem 4rem;
+}
+
+.hero-icon {
+  display: block;
+  margin: 0 auto 1.5rem;
+  border-radius: 22px;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.75rem;
+}
+
+.hero-tagline {
+  font-size: 1.25rem;
+  color: var(--text-light);
+  margin-bottom: 2rem;
+}
+
+.hero-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-brew {
+  display: inline-block;
+  background-color: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.5rem 1.25rem;
+  font-size: 0.9rem;
+}
+
+/* ===========================
+   Buttons
+   =========================== */
+
+.btn {
+  display: inline-block;
+  padding: 0.75rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.btn-primary {
+  background-color: var(--accent);
+  color: var(--white);
+}
+
+.btn-primary:hover {
+  background-color: var(--accent-hover);
+  text-decoration: none;
+}
+
+/* ===========================
+   Features
+   =========================== */
+
+.features {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.features .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.feature {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 3rem;
+  margin-bottom: 4rem;
+}
+
+.feature-reverse {
+  flex-direction: row-reverse;
+}
+
+.feature-text,
+.feature-media {
+  flex: 1;
+}
+
+.feature-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.feature-shortcut {
+  margin-bottom: 0.75rem;
+}
+
+.feature-description {
+  color: var(--text-light);
+  line-height: 1.7;
+}
+
+/* kbd used inside feature shortcut badges */
+.feature-shortcut kbd {
+  display: inline-block;
+  background-color: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.85rem;
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+.shortcut-badge {
+  display: inline-block;
+  background-color: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.media-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-alt);
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  height: 220px;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+/* ===========================
+   Shortcuts Table
+   =========================== */
+
+.shortcuts {
+  background-color: var(--bg-alt);
+  padding: 4rem 1.5rem;
+}
+
+.shortcuts .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.shortcuts-table {
+  max-width: 720px;
+  margin: 0 auto;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.shortcuts-table th,
+.shortcuts-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.shortcuts-table th {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.shortcuts-table td {
+  color: var(--text-light);
+}
+
+.shortcuts-note {
+  text-align: center;
+  color: var(--text-light);
+  font-size: 0.9rem;
+  margin-top: 1.5rem;
+}
+
+kbd {
+  display: inline-block;
+  background-color: var(--kbd-bg);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 0.85rem;
+  box-shadow: 0 1px 0 var(--border);
+}
+
+/* ===========================
+   Install
+   =========================== */
+
+.install {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.install .section-title {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.install-methods {
+  display: flex;
+  flex-direction: row;
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.install-method {
+  flex: 1;
+  background-color: var(--bg-alt);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.install-method-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+}
+
+.install-method-description {
+  color: var(--text-light);
+  margin-bottom: 1rem;
+  line-height: 1.6;
+}
+
+.install-method pre {
+  background-color: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  overflow-x: auto;
+  margin-bottom: 0;
+}
+
+.install-method pre code {
+  color: var(--text);
+}
+
+.install-note {
+  text-align: center;
+  font-size: 0.875rem;
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+/* ===========================
+   Footer
+   =========================== */
+
+.footer {
+  text-align: center;
+  border-top: 1px solid var(--border);
+  padding: 2rem 1.5rem;
+  color: var(--text-light);
+  font-size: 0.9rem;
+}
+
+.footer-links {
+  margin-bottom: 0.5rem;
+}
+
+.footer-link {
+  color: var(--link);
+}
+
+.footer-link:hover {
+  text-decoration: underline;
+}
+
+/* ===========================
+   Responsive
+   =========================== */
+
+@media (max-width: 768px) {
+  .hero-title {
+    font-size: 2.25rem;
+  }
+
+  .hero-tagline {
+    font-size: 1.1rem;
+  }
+
+  .feature,
+  .feature-reverse {
+    flex-direction: column;
+  }
+
+  .install-methods {
+    flex-direction: column;
+  }
+
+  .media-placeholder {
+    height: 180px;
+  }
+}

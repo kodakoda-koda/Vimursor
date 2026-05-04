@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vimursor — Think in Vim. Navigate in Mac.</title>
+  <meta name="description" content="Vimursor is a macOS keyboard navigation tool. Control any app with Vim-style keyboard commands — hint mode, search mode, scroll mode, and cursor mode.">
+  <meta property="og:title" content="Vimursor — Think in Vim. Navigate in Mac.">
+  <meta property="og:description" content="Control any macOS app with Vim-style keyboard commands.">
+  <meta property="og:image" content="https://kodakoda-koda.github.io/Vimursor/icon-256.png">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://kodakoda-koda.github.io/Vimursor/">
+  <link rel="icon" href="icon-256.png" type="image/png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Hero -->
+  <section class="hero">
+    <img src="icon-256.png" alt="Vimursor app icon" class="hero-icon" width="128" height="128">
+    <h1 class="hero-title">Vimursor</h1>
+    <p class="hero-tagline">Think in Vim. Navigate in Mac.</p>
+    <div class="hero-actions">
+      <a href="https://github.com/kodakoda-koda/Vimursor/releases/latest/download/Vimursor.dmg" class="btn btn-primary">Download DMG</a>
+    </div>
+    <div class="hero-brew">
+      <code>brew install --cask vimursor</code>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features">
+    <h2 class="section-title">Features</h2>
+
+    <!-- Hint Mode (odd: text-left / media-right) -->
+    <div class="feature">
+      <div class="feature-text">
+        <h3 class="feature-title">Hint Mode</h3>
+        <p class="feature-shortcut"><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd></p>
+        <p class="feature-description">Click any UI element with keyboard hints. Labels appear on every clickable element — type the label to click instantly.</p>
+      </div>
+      <div class="feature-media">
+        <div class="media-placeholder">Demo coming soon</div>
+      </div>
+    </div>
+
+    <!-- Search Mode (even: media-left / text-right) -->
+    <div class="feature feature-reverse">
+      <div class="feature-text">
+        <h3 class="feature-title">Search Mode</h3>
+        <p class="feature-shortcut"><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd></p>
+        <p class="feature-description">Type to search and click matching elements. Incrementally filters UI elements by text, then press Enter to click.</p>
+      </div>
+      <div class="feature-media">
+        <div class="media-placeholder">Demo coming soon</div>
+      </div>
+    </div>
+
+    <!-- Scroll Mode (odd: text-left / media-right) -->
+    <div class="feature">
+      <div class="feature-text">
+        <h3 class="feature-title">Scroll Mode</h3>
+        <p class="feature-shortcut"><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd></p>
+        <p class="feature-description">Vim-style scrolling with j/k for line scroll and u/d for half-page scroll. Press Escape to exit.</p>
+      </div>
+      <div class="feature-media">
+        <div class="media-placeholder">Demo coming soon</div>
+      </div>
+    </div>
+
+    <!-- Cursor Mode (even: media-left / text-right) -->
+    <div class="feature feature-reverse">
+      <div class="feature-text">
+        <h3 class="feature-title">Cursor Mode</h3>
+        <p class="feature-shortcut"><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd></p>
+        <p class="feature-description">Move the cursor with hjkl keys. Precise, keyboard-driven cursor positioning without touching the mouse.</p>
+      </div>
+      <div class="feature-media">
+        <div class="media-placeholder">Demo coming soon</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Shortcuts Table -->
+  <section class="shortcuts">
+    <h2 class="section-title">Keyboard Shortcuts</h2>
+    <table class="shortcuts-table">
+      <thead>
+        <tr>
+          <th>Shortcut</th>
+          <th>Mode</th>
+          <th>Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>Space</kbd></td>
+          <td>Hint Mode</td>
+          <td>Show clickable element labels</td>
+        </tr>
+        <tr>
+          <td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>/</kbd></td>
+          <td>Search Mode</td>
+          <td>Search and click UI elements by text</td>
+        </tr>
+        <tr>
+          <td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>J</kbd></td>
+          <td>Scroll Mode</td>
+          <td>Vim-style scrolling (j/k/u/d)</td>
+        </tr>
+        <tr>
+          <td><kbd>Cmd</kbd>+<kbd>Shift</kbd>+<kbd>K</kbd></td>
+          <td>Cursor Mode</td>
+          <td>Move cursor with hjkl</td>
+        </tr>
+        <tr>
+          <td><kbd>Escape</kbd></td>
+          <td>All Modes</td>
+          <td>Exit current mode</td>
+        </tr>
+      </tbody>
+    </table>
+    <p class="shortcuts-note">All shortcuts are customizable in Settings.</p>
+  </section>
+
+  <!-- Install -->
+  <section class="install">
+    <h2 class="section-title">Installation</h2>
+    <div class="install-methods">
+      <div class="install-method">
+        <h3 class="install-method-title">Homebrew</h3>
+        <pre><code>brew install --cask vimursor</code></pre>
+      </div>
+      <div class="install-method">
+        <h3 class="install-method-title">Direct Download</h3>
+        <p class="install-method-description">Download the latest DMG and drag Vimursor to your Applications folder.</p>
+        <a href="https://github.com/kodakoda-koda/Vimursor/releases/latest/download/Vimursor.dmg" class="btn btn-primary">Download DMG</a>
+      </div>
+    </div>
+    <p class="install-note">Vimursor requires Accessibility permissions. On first launch, macOS will prompt you to grant access in System Settings &rarr; Privacy &amp; Security &rarr; Accessibility.</p>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p class="footer-links">
+      <a href="https://github.com/kodakoda-koda/Vimursor" class="footer-link">GitHub</a>
+    </p>
+    <p class="footer-license">Released under the MIT License.</p>
+  </footer>
+
+</body>
+</html>
