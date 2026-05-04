@@ -29,18 +29,10 @@ jobs:
       - name: Build dmg
         run: bash scripts/build-dmg.sh
 
-      - name: Generate release notes
-        id: changelog
-        uses: orhun/git-cliff-action@v4
-        with:
-          config: cliff.toml
-          args: --latest --strip header
-
       - name: Upload to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: Vimursor.dmg
-          body: ${{ steps.changelog.outputs.content }}
 
       - name: Calculate DMG SHA256
         id: sha256
