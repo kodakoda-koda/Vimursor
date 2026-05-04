@@ -87,7 +87,7 @@ Sources/Vimursor/
 ## Reporting Issues
 
 - **Bugs**: Use the [Bug Report](https://github.com/kodakoda-koda/Vimursor/issues/new/choose) template
-- **Feature ideas**: Open a [Discussion](https://github.com/kodakoda-koda/Vimursor/discussions/new?category=ideas)
+- **Feature ideas**: Open a [Feature Request](https://github.com/kodakoda-koda/Vimursor/issues/new?template=2_feature.yml)
 
 ---
 
