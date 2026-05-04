@@ -490,4 +490,11 @@ try savePNG(menuIcon1x, to: "\(resourcesDir)/MenuBarIcon.png")
 let menuIcon2x = drawMenuBarIcon(size: 36)
 try savePNG(menuIcon2x, to: "\(resourcesDir)/MenuBarIcon@2x.png")
 
+// Web icon for GitHub Pages
+print("Rendering web icon...")
+let docsDir = repoRootURL.appendingPathComponent("docs").path
+try FileManager.default.createDirectory(atPath: docsDir, withIntermediateDirectories: true)
+let webIcon = drawIcon(size: 256)
+try savePNG(webIcon, to: "\(docsDir)/icon-256.png")
+
 print("Done!")
