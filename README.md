@@ -1,14 +1,18 @@
 <p align="center">
-  <img src="docs/images/header.svg" alt="Vimursor - Vim-style navigation for macOS" width="800">
+  <img src="docs/images/header.svg" alt="Vimursor - Think in Vim. Navigate in Mac." width="800">
 </p>
 
 <p align="center">
-  Navigate macOS with Vim-style commands. Vimursor brings Vim's philosophy — <strong>keep your hands on the home row</strong> — to the entire operating system, letting you click, search, and scroll any UI element without touching the mouse.
+  Think in Vim. Navigate in Mac. Vimursor brings Vim's philosophy — <strong>keep your hands on the home row</strong> — to the entire operating system, letting you click, search, scroll, and move the cursor without touching the mouse.
 </p>
 
 <p align="center">
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
   <a href="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml"><img src="https://github.com/kodakoda-koda/Vimursor/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+</p>
+
+<p align="center">
+  <a href="https://kodakoda-koda.github.io/Vimursor/">Homepage</a>
 </p>
 
 <p align="center">
@@ -24,12 +28,11 @@
 | `Cmd+Shift+Space` | **Hint Mode** — Jump to any clickable element with labels, inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion) |
 | `Cmd+Shift+/` | **Search Mode** — Find elements by text, like Vim's `/` search |
 | `Cmd+Shift+J` | **Scroll Mode** — Scroll with `j`/`k`/`u`/`d`, just like Vim |
+| `Cmd+Shift+K` | **Cursor Mode** — Move the cursor with `h`/`j`/`k`/`l` keys |
 
 Shortcuts can be changed via the menu bar icon → "Settings...".
 
 ### Hint Mode — EasyMotion for macOS
-
-<!-- TODO: Add GIF demonstrating hint mode -->
 
 Inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion). Labels appear on every clickable element — type the label to jump there instantly.
 
@@ -38,9 +41,13 @@ Inspired by [vim-easymotion](https://github.com/easymotion/vim-easymotion). Labe
 3. The corresponding element is clicked automatically and Hint Mode exits
 4. Press `ESC` to cancel
 
-### Search Mode — Vim `/` Search
+Hold modifier keys while typing a label for alternative click actions:
+- `Shift` — right-click
+- `Cmd` — Cmd+click
+- `Ctrl` — Ctrl+click
+- `Option` — Option+click
 
-<!-- TODO: Add GIF demonstrating search mode -->
+### Search Mode — Vim `/` Search
 
 Like Vim's `/` command, search for elements by text and jump to them.
 
@@ -51,8 +58,6 @@ Like Vim's `/` command, search for elements by text and jump to them.
 
 ### Scroll Mode — Vim-style Scrolling
 
-<!-- TODO: Add GIF demonstrating scroll mode -->
-
 Scroll any window using familiar Vim motions.
 
 1. Press `Cmd+Shift+J` to enter Scroll Mode
@@ -62,6 +67,18 @@ Scroll any window using familiar Vim motions.
    - `d` — scroll down half a page
    - `u` — scroll up half a page
 3. Press `ESC` to exit Scroll Mode
+
+### Cursor Mode — hjkl Cursor Movement
+
+Move the cursor anywhere on screen using Vim's hjkl keys.
+
+1. Press `Cmd+Shift+K` to enter Cursor Mode
+2. Use the following keys to move the cursor:
+   - `h` — move left
+   - `j` — move down
+   - `k` — move up
+   - `l` — move right
+3. Press `ESC` to exit Cursor Mode
 
 ---
 
@@ -77,8 +94,7 @@ Scroll any window using familiar Vim motions.
 ### Homebrew (recommended)
 
 ```bash
-brew tap kodakoda-koda/vimursor
-brew install --cask vimursor
+brew install --cask kodakoda-koda/vimursor/vimursor
 ```
 
 ### Download from GitHub Releases
