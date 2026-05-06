@@ -20,6 +20,17 @@ enum WebAreaSplitDetector {
     /// この比率以上の幅を持つ子はラッパーとみなす（親幅に対する割合）
     static let wrapperWidthRatio: CGFloat = 0.9
 
+    // MARK: - Tiling Validation Constants
+
+    /// タイル間の最大ギャップ（ポイント）
+    private static let tilingMaxGap: CGFloat = 50
+    /// 各タイルの高さ（または幅）が最大タイルに対して持つべき最小比率
+    private static let tilingSizeRatio: CGFloat = 0.5
+    /// タイルのY座標（水平）またはX座標（垂直）のスプレッド許容値（ポイント）
+    private static let tilingPositionTolerance: CGFloat = 50
+    /// タイルの合計幅（または高さ）が親ディメンションに対して持つべき最小比率
+    private static let tilingCoverageRatio: CGFloat = 0.7
+
     // MARK: - Public API
 
     /// AXWebArea から ScrollAreaInfo のリストを返す。
@@ -70,8 +81,12 @@ enum WebAreaSplitDetector {
         }
 
         if nonWrappers.count >= 2 {
-            // 分割ポイント発見
-            return nonWrappers.map { $0.frame }
+            let frames = nonWrappers.map { $0.frame }
+            // タイリング検証: 候補が水平または垂直グリッドを形成しない場合は分割しない
+            guard validateTiling(candidates: frames, parentFrame: parentFrame) else {
+                return nil
+            }
+            return frames
         }
 
         // ラッパー（幅が wrapperWidthRatio 以上）の子を透過して再帰
@@ -86,6 +101,45 @@ enum WebAreaSplitDetector {
         }
 
         return nil
+    }
+
+    // MARK: - Tiling Validation
+
+    /// 候補フレームが水平タイリングパターンを形成するか検証する純粋関数。
+    /// 水平チェック: 候補がX軸方向に並んでいるか（Y位置スプレッドが小さい）。
+    /// 注: 垂直スタック（同幅要素の縦並び）はコンテンツセクションであり独立スクロール領域ではないため対象外。
+    // internal for testability
+    static func validateTiling(candidates: [CGRect], parentFrame: CGRect) -> Bool {
+        guard candidates.count >= 2 else { return false }
+        return checkHorizontalTiling(candidates: candidates, parentFrame: parentFrame)
+    }
+
+    /// 水平タイリング（候補がX軸方向に並ぶ）を検証する。
+    private static func checkHorizontalTiling(candidates: [CGRect], parentFrame: CGRect) -> Bool {
+        let sorted = candidates.sorted { $0.minX < $1.minX }
+        let maxHeight = sorted.map { $0.height }.max() ?? 0
+
+        // 隣接ギャップチェック（負のギャップ＝重複も無効）
+        for i in 0..<(sorted.count - 1) {
+            let gap = sorted[i + 1].minX - sorted[i].maxX
+            if gap < 0 || gap > tilingMaxGap { return false }
+        }
+
+        // Y位置スプレッドチェック
+        let minY = sorted.map { $0.minY }.min() ?? 0
+        let maxY = sorted.map { $0.minY }.max() ?? 0
+        if (maxY - minY) > tilingPositionTolerance { return false }
+
+        // サイズ比チェック（各候補の高さが最大高さに対して tilingSizeRatio 以上）
+        for rect in sorted {
+            if rect.height < maxHeight * tilingSizeRatio { return false }
+        }
+
+        // カバレッジチェック（合計幅が親幅に対して tilingCoverageRatio 以上）
+        let totalWidth = sorted.map { $0.width }.reduce(0, +)
+        if totalWidth < parentFrame.width * tilingCoverageRatio { return false }
+
+        return true
     }
 
     // MARK: - AX Tree Extraction

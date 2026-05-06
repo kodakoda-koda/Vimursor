@@ -55,10 +55,27 @@ enum ScrollTarget {
     /// AX ツリーを走査し、スクロール可能な全領域を返す
     /// - AXWebArea を検出したら WebAreaSplitDetector に委譲してレイアウト分割を検出する
     /// - 通常のスクロール可能ロールはリーフ優先で収集する
-    static func enumerateScrollableElements(root: AXUIElement) -> [ScrollAreaInfo] {
+    /// - windowFrame が指定された場合、ウィンドウ可視領域でフィルタリングし重複を除去する
+    static func enumerateScrollableElements(
+        root: AXUIElement,
+        windowFrame: CGRect? = nil
+    ) -> [ScrollAreaInfo] {
         var result: [ScrollAreaInfo] = []
         collectScrollable(element: root, into: &result, depth: 0)
-        return result
+
+        guard let windowFrame else { return result }
+
+        // ウィンドウ可視領域でフィルタリング
+        let filtered = ScrollAreaFilter.filterByWindow(areas: result.map { $0.frame }, windowFrame: windowFrame)
+        let deduped = ScrollAreaFilter.removeOverlaps(areas: filtered)
+
+        return deduped.enumerated().map { (index, area) in
+            ScrollAreaInfo(
+                frame: area.frame,
+                centerPoint: CGPoint(x: area.frame.midX, y: area.frame.midY),
+                label: String(index + 1)
+            )
+        }
     }
 
     private static func collectScrollable(
