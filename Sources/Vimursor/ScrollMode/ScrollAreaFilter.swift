@@ -17,6 +17,8 @@ enum ScrollAreaFilter {
     private static let minDimensionPoints: CGFloat = 100
     /// 重複とみなすオーバーラップ比率の閾値
     private static let overlapThresholdRatio: CGFloat = 0.5
+    /// デスクトップレベルの領域とみなす面積比率（ウィンドウ面積に対する倍率）
+    private static let desktopAreaRatio: CGFloat = 1.5
 
     // MARK: - filterByWindow
 
@@ -32,8 +34,11 @@ enum ScrollAreaFilter {
         windowFrame: CGRect
     ) -> [FilteredArea] {
         areas.compactMap { areaFrame in
-            // 1. 領域がウィンドウ全体を包含する場合は除外
-            if areaFrame.contains(windowFrame) { return nil }
+            // 1. デスクトップレベルの領域（ウィンドウより desktopAreaRatio 以上大きい）は除外
+            // ウィンドウと同サイズの正当なスクロール領域（Chrome のメインページ等）は除外しない
+            let areaSize = areaFrame.width * areaFrame.height
+            let windowSize = windowFrame.width * windowFrame.height
+            if areaFrame.contains(windowFrame), windowSize > 0, areaSize / windowSize > desktopAreaRatio { return nil }
 
             // 2. 交差がない場合は除外
             let intersection = areaFrame.intersection(windowFrame)
@@ -83,7 +88,7 @@ enum ScrollAreaFilter {
                 let overlapRatioA = areaA > 0 ? intersectionArea / areaA : 0
                 let overlapRatioB = areaB > 0 ? intersectionArea / areaB : 0
 
-                guard overlapRatioA > overlapThresholdRatio || overlapRatioB > overlapThresholdRatio else { continue }
+                guard overlapRatioA >= overlapThresholdRatio || overlapRatioB >= overlapThresholdRatio else { continue }
 
                 // どちらか一方のみ originMoved → originMoved を除外
                 if a.originMoved && !b.originMoved {

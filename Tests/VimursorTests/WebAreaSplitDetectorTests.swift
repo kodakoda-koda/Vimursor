@@ -162,7 +162,7 @@ struct WebAreaSplitDetectorTests {
         let result = WebAreaSplitDetector.findSplitFrames(
             children: kids, parentFrame: parent, depth: 0
         )
-        // Header is filtered by wrapperWidthRatio (1470/1470=1.0 >= 0.9).
+        // Header (height=68) is filtered by minChildSize (68 < 100).
         // The two remaining candidates: Y spread = 500-68 = 432 > positionTolerance(50) → horizontal check fails.
         // validateTiling returns false → nil
         #expect(result == nil, "GitHub-likeレイアウトはタイリング検証で拒否される")

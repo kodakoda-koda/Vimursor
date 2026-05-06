@@ -10,10 +10,30 @@ struct ScrollAreaFilterTests {
     @Test("Area containing entire window is excluded (desktop-level area)")
     func areaContainingEntireWindowExcluded() {
         let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
-        // Area is larger than window and contains it
+        // Area is a full-screen desktop area: 2560x1440 >> window (800x600)
+        // ratio = 3686400 / 480000 ≈ 7.7 > desktopAreaRatio(1.5) → excluded
         let area = CGRect(x: 0, y: 0, width: 2560, height: 1440)
         let result = ScrollAreaFilter.filterByWindow(areas: [area], windowFrame: windowFrame)
         #expect(result.isEmpty)
+    }
+
+    @Test("Area equal to window frame is kept (Chrome-like main page scroll view)")
+    func areaEqualToWindowFrameIsKept() {
+        let windowFrame = CGRect(x: 0, y: 0, width: 1200, height: 900)
+        // Area exactly matches window frame — valid scroll area (e.g. Chrome main page)
+        // ratio = 1.0 <= desktopAreaRatio(1.5) → not excluded by desktop check
+        let area = windowFrame
+        let result = ScrollAreaFilter.filterByWindow(areas: [area], windowFrame: windowFrame)
+        #expect(result.count == 1)
+    }
+
+    @Test("Area slightly larger than window (ratio <= 1.5) is kept")
+    func areaSlightlyLargerThanWindowIsKept() {
+        let windowFrame = CGRect(x: 100, y: 100, width: 800, height: 600)
+        // Area is ~20% larger than window: 880x660 = 580800, window = 480000, ratio ≈ 1.21 <= 1.5 → kept
+        let area = CGRect(x: 60, y: 60, width: 880, height: 660)
+        let result = ScrollAreaFilter.filterByWindow(areas: [area], windowFrame: windowFrame)
+        #expect(result.count == 1)
     }
 
     @Test("Area with no intersection is excluded")

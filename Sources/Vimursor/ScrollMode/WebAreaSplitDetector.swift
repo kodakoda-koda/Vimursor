@@ -24,11 +24,11 @@ enum WebAreaSplitDetector {
 
     /// タイル間の最大ギャップ（ポイント）
     private static let tilingMaxGap: CGFloat = 50
-    /// 各タイルの高さ（または幅）が最大タイルに対して持つべき最小比率
+    /// 各タイルの高さが最大タイルに対して持つべき最小比率
     private static let tilingSizeRatio: CGFloat = 0.5
-    /// タイルのY座標（水平）またはX座標（垂直）のスプレッド許容値（ポイント）
+    /// タイルのY座標スプレッド許容値（ポイント）
     private static let tilingPositionTolerance: CGFloat = 50
-    /// タイルの合計幅（または高さ）が親ディメンションに対して持つべき最小比率
+    /// タイルの合計幅が親幅に対して持つべき最小比率
     private static let tilingCoverageRatio: CGFloat = 0.7
 
     // MARK: - Public API
@@ -82,7 +82,7 @@ enum WebAreaSplitDetector {
 
         if nonWrappers.count >= 2 {
             let frames = nonWrappers.map { $0.frame }
-            // タイリング検証: 候補が水平または垂直グリッドを形成しない場合は分割しない
+            // タイリング検証: 候補が水平グリッドを形成しない場合は分割しない
             guard validateTiling(candidates: frames, parentFrame: parentFrame) else {
                 return nil
             }
