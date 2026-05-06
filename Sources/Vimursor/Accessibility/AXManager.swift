@@ -170,11 +170,22 @@ final class AXManager: @unchecked Sendable {
     ) {
         let appElement = AXElement(ref: app)
         DispatchQueue.global(qos: .userInitiated).async {
-            let areas = ScrollTarget.enumerateScrollableElements(root: appElement.ref)
+            let windowFrame = Self.focusedWindowFrame(of: appElement.ref)
+            let areas = ScrollTarget.enumerateScrollableElements(root: appElement.ref, windowFrame: windowFrame)
             DispatchQueue.main.async {
                 completion(areas)
             }
         }
+    }
+
+    /// フォーカスウィンドウのフレームを AX スクリーン座標（原点:左上）で返す。
+    /// 取得できない場合は nil を返す（フィルタリングをスキップするため）。
+    private static func focusedWindowFrame(of app: AXUIElement) -> CGRect? {
+        var windowRef: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, "AXFocusedWindow" as CFString, &windowRef) == .success,
+              let windowRef,
+              let window = AXAttributes.element(from: windowRef) else { return nil }
+        return AXAttributes.frame(of: window)
     }
 
     private func fetchFrame(element: AXUIElement, screenHeight: CGFloat) -> CGRect? {

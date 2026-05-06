@@ -147,6 +147,112 @@ struct WebAreaSplitDetectorTests {
         #expect(result == nil, "子が0件では分割されない")
     }
 
+    // MARK: - validateTiling Tests
+
+    /// GitHub-like layout: 3 elements with large Y/X spread → rejected
+    @Test("GitHub-like layout: タイリング検証で分割が拒否される")
+    func githubLikeLayoutRejectedByTilingValidation() {
+        // Header-like, main content, another section — not side-by-side
+        let parent = CGRect(x: 0, y: 0, width: 1470, height: 900)
+        let kids = children(frames: [
+            CGRect(x: 0,   y: 0,   width: 1470, height: 68),   // header-like (too small in height, filtered)
+            CGRect(x: 220, y: 68,  width: 1250, height: 400),  // main content
+            CGRect(x: 220, y: 500, width: 1250, height: 400),  // another section
+        ])
+        let result = WebAreaSplitDetector.findSplitFrames(
+            children: kids, parentFrame: parent, depth: 0
+        )
+        // Header (height=68) is filtered by minChildSize (68 < 100).
+        // The two remaining candidates: Y spread = 500-68 = 432 > positionTolerance(50) → horizontal check fails.
+        // validateTiling returns false → nil
+        #expect(result == nil, "GitHub-likeレイアウトはタイリング検証で拒否される")
+    }
+
+    /// Slack-like layout: 2 elements side by side → accepted
+    @Test("Slack-like layout: タイリング検証で分割が承認される")
+    func slackLikeLayoutAcceptedByTilingValidation() {
+        let parent = CGRect(x: 0, y: 0, width: 1470, height: 900)
+        let kids = children(frames: [
+            CGRect(x: 0,   y: 0, width: 300,  height: 900),  // sidebar
+            CGRect(x: 300, y: 0, width: 1170, height: 900),  // main
+        ])
+        let result = WebAreaSplitDetector.findSplitFrames(
+            children: kids, parentFrame: parent, depth: 0
+        )
+        #expect(result?.count == 2, "Slack-likeレイアウトはタイリング検証を通過して2分割される")
+    }
+
+    /// Vertical stacking (same-width elements): NOT a valid split — stacked content sections
+    @Test("垂直スタック: 同幅の要素が縦に並ぶ場合は分割されない（コンテンツセクション）")
+    func verticalStackingRejected() {
+        // Two same-width elements stacked vertically = content sections, not independent panes
+        let parent = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let kids = children(frames: [
+            CGRect(x: 0, y: 0,   width: 800, height: 380),
+            CGRect(x: 0, y: 400, width: 800, height: 400),
+        ])
+        let result = WebAreaSplitDetector.findSplitFrames(
+            children: kids, parentFrame: parent, depth: 0
+        )
+        #expect(result == nil, "垂直スタックはコンテンツセクションとして分割されない")
+    }
+
+    /// validateTiling direct test: horizontal valid
+    @Test("validateTiling: 水平タイリングが有効な場合 true を返す")
+    func validateTilingHorizontalValid() {
+        let parent = CGRect(x: 0, y: 0, width: 1470, height: 900)
+        let candidates = [
+            CGRect(x: 0,   y: 0, width: 300,  height: 900),
+            CGRect(x: 300, y: 0, width: 1170, height: 900),
+        ]
+        #expect(WebAreaSplitDetector.validateTiling(candidates: candidates, parentFrame: parent) == true)
+    }
+
+    /// validateTiling direct test: horizontal invalid (large Y spread)
+    @Test("validateTiling: Y スプレッドが大きい場合 false を返す")
+    func validateTilingHorizontalInvalidYSpread() {
+        let parent = CGRect(x: 0, y: 0, width: 1470, height: 900)
+        let candidates = [
+            CGRect(x: 220, y: 68,  width: 1250, height: 400),
+            CGRect(x: 220, y: 500, width: 1250, height: 400),
+        ]
+        #expect(WebAreaSplitDetector.validateTiling(candidates: candidates, parentFrame: parent) == false)
+    }
+
+    /// validateTiling direct test: vertical stacking (same-width) → false (horizontal-only validation)
+    @Test("validateTiling: 垂直スタック（同幅）は false を返す（水平タイリングのみ有効）")
+    func validateTilingVerticalStackingReturnsFalse() {
+        let parent = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let candidates = [
+            CGRect(x: 0, y: 0,   width: 800, height: 380),
+            CGRect(x: 0, y: 400, width: 800, height: 400),
+        ]
+        // Vertical stacking of same-width content = content sections, not independent scroll panes
+        #expect(WebAreaSplitDetector.validateTiling(candidates: candidates, parentFrame: parent) == false)
+    }
+
+    /// validateTiling direct test: large gaps between candidates → false
+    @Test("validateTiling: 候補間のギャップが大きい場合 false を返す")
+    func validateTilingLargeGap() {
+        let parent = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let candidates = [
+            CGRect(x: 0,   y: 0, width: 200, height: 800),
+            CGRect(x: 700, y: 0, width: 200, height: 800),  // gap = 500 > maxGap(50)
+        ]
+        #expect(WebAreaSplitDetector.validateTiling(candidates: candidates, parentFrame: parent) == false)
+    }
+
+    /// validateTiling direct test: insufficient coverage → false
+    @Test("validateTiling: カバレッジが不十分な場合 false を返す")
+    func validateTilingInsufficientCoverage() {
+        let parent = CGRect(x: 0, y: 0, width: 1000, height: 800)
+        let candidates = [
+            CGRect(x: 0,  y: 0, width: 100, height: 800),
+            CGRect(x: 100, y: 0, width: 100, height: 800),  // total width = 200, 200/1000 = 0.2 < 0.7
+        ]
+        #expect(WebAreaSplitDetector.validateTiling(candidates: candidates, parentFrame: parent) == false)
+    }
+
     // MARK: - wrapperWidthRatio 境界値テスト
 
     /// 幅が parentWidth * 0.9 ちょうどの子はラッパーとみなして再帰する
