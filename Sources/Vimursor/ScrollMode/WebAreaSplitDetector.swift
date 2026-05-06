@@ -105,9 +105,6 @@ enum WebAreaSplitDetector {
 
     // MARK: - Tiling Validation
 
-    /// 候補フレームが水平タイリングパターンを形成するか検証する純粋関数。
-    /// 水平チェック: 候補がX軸方向に並んでいるか（Y位置スプレッドが小さい）。
-    /// 注: 垂直スタック（同幅要素の縦並び）はコンテンツセクションであり独立スクロール領域ではないため対象外。
     // internal for testability
     static func validateTiling(candidates: [CGRect], parentFrame: CGRect) -> Bool {
         guard candidates.count >= 2 else { return false }
@@ -131,8 +128,8 @@ enum WebAreaSplitDetector {
         if (maxY - minY) > tilingPositionTolerance { return false }
 
         // サイズ比チェック（各候補の高さが最大高さに対して tilingSizeRatio 以上）
-        for rect in sorted {
-            if rect.height < maxHeight * tilingSizeRatio { return false }
+        for rect in sorted where rect.height < maxHeight * tilingSizeRatio {
+            return false
         }
 
         // カバレッジチェック（合計幅が親幅に対して tilingCoverageRatio 以上）
